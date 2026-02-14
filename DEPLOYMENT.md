@@ -1,28 +1,53 @@
 # Deployment & Testing Guide
 
-## Local Development
+## Quick Deploy to GitHub Pages (Recommended)
 
-### Requirements
-- Ruby 3.0+
-- Bundler
-
-### Setup & Run
+The easiest way to test is to deploy directly to GitHub Pages:
 
 ```bash
-# Install dependencies
-bundle install
+git add .
+git commit -m "feat: modernize meme platform"
+git push origin main
+```
 
-# Serve locally
+GitHub Pages will build and deploy automatically. Visit your site at:
+`https://lucianoadonis.github.io/talent`
+
+## Local Development (Optional)
+
+### Requirements
+- Ruby 3.0+ (macOS system Ruby 2.6 is too old)
+- Bundler
+
+### Option 1: Docker (Easiest for Local Testing)
+
+```bash
+docker run -it --rm \
+  -v "$PWD":/usr/src/app \
+  -p 4000:4000 \
+  jekyll/jekyll:4.2.0 \
+  jekyll serve --force_polling --host 0.0.0.0
+
+# Visit http://localhost:4000/talent
+```
+
+### Option 2: Using rbenv/rvm (Ruby Version Manager)
+
+```bash
+# Install rbenv or rvm first, then:
+rbenv install 3.2.0
+rbenv local 3.2.0
+
+# Then install and serve
+bundle install
 bundle exec jekyll serve
 
 # Visit http://localhost:4000/talent
 ```
 
-### Alternative: Docker (if Ruby version issues)
+### Option 3: GitHub Codespaces
 
-```bash
-docker run -it --rm -v "$PWD":/usr/src/app -p 4000:4000 jekyll/jekyll jekyll serve --force_polling
-```
+Create a codespace from your repository for a pre-configured environment.
 
 ## GitHub Pages Deployment
 

@@ -26,6 +26,20 @@ plugins:
   - jekyll-seo-tag
   - jekyll-sitemap
 
+# Exclude files from Jekyll processing
+exclude:
+  - CLAUDE.md
+  - DEPLOYMENT.md
+  - UPGRADE_SUMMARY.md
+  - Gemfile
+  - Gemfile.lock
+  - README.md
+  - .gitignore
+  - .git
+  - .claude
+  - .mcp.json
+  - vendor
+
 # Collections for better organization
 defaults:
   - scope:
