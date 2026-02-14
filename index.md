@@ -1,140 +1,820 @@
 ---
 layout: custom
-title: Meme Delivery Platform
-description: Your ultimate meme library
+title: MEME ARCADE
+description: INSERT COIN TO CONTINUE
 ---
 
-<!-- Featured Memes Carousel -->
-<section class="bg-white py-8 shadow-md mb-8">
-  <div class="container mx-auto px-4">
-    <h2 class="text-2xl font-bold text-gray-800 mb-6 text-center">Featured Memes</h2>
+<!-- Arcade Cabinet Frame -->
+<div class="arcade-frame">
 
-    <div class="relative">
-      <!-- Carousel Container -->
-      <div id="carousel" class="overflow-hidden">
-        <div id="carousel-track" class="flex transition-transform duration-500 ease-in-out gap-4">
-          <!-- Carousel items will be dynamically loaded -->
+<!-- CRT Screen Container -->
+<div class="crt-screen">
+
+  <!-- Scanlines Effect -->
+  <div class="scanlines"></div>
+
+  <!-- Screen Glow -->
+  <div class="screen-glow"></div>
+
+  <!-- Arcade Header -->
+  <header class="arcade-header">
+    <div class="score-display">
+      <span class="label">MEMES</span>
+      <span class="value" id="meme-count">000</span>
+    </div>
+    <h1 class="arcade-title">
+      <span class="glitch" data-text="MEME ARCADE">MEME ARCADE</span>
+    </h1>
+    <div class="credits-display">
+      <span class="label">LEVEL</span>
+      <span class="value" id="current-level">01</span>
+    </div>
+  </header>
+
+  <!-- Featured Memes Carousel - "HIGH SCORES" -->
+  <section class="featured-section">
+    <h2 class="section-title">
+      <span class="blink">★</span> FEATURED MEMES <span class="blink">★</span>
+    </h2>
+
+    <div class="carousel-container">
+      <button id="carousel-prev" class="arcade-btn arcade-btn-left" aria-label="Previous">
+        <span>◄</span>
+      </button>
+
+      <div class="carousel-viewport">
+        <div id="carousel-track" class="carousel-track">
+          <!-- Carousel items loaded dynamically -->
         </div>
       </div>
 
-      <!-- Carousel Controls -->
-      <button id="carousel-prev" class="absolute left-0 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-3 rounded-r-lg transition-colors z-10">
-        <i class="fas fa-chevron-left"></i>
-      </button>
-      <button id="carousel-next" class="absolute right-0 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-3 rounded-r-lg transition-colors z-10">
-        <i class="fas fa-chevron-right"></i>
+      <button id="carousel-next" class="arcade-btn arcade-btn-right" aria-label="Next">
+        <span>►</span>
       </button>
     </div>
+  </section>
 
-    <!-- Carousel Indicators -->
-    <div id="carousel-indicators" class="flex justify-center gap-2 mt-4">
-      <!-- Indicators will be dynamically added -->
+  <!-- Search Console -->
+  <section class="search-section">
+    <div class="search-container">
+      <div class="search-label">SEARCH DATABASE:</div>
+      <div class="search-input-wrapper">
+        <input
+          type="text"
+          id="global-search"
+          placeholder="ENTER SEARCH QUERY..."
+          class="search-input"
+          autocomplete="off"
+        />
+        <button id="clear-search" class="clear-btn" aria-label="Clear search">✕</button>
+      </div>
     </div>
-  </div>
-</section>
+  </section>
 
-<!-- Global Search -->
-<section class="container mx-auto px-4 mb-8">
-  <div class="max-w-2xl mx-auto">
-    <div class="relative">
-      <input
-        type="text"
-        id="global-search"
-        placeholder="Search all memes..."
-        class="w-full px-6 py-4 text-lg border-2 border-gray-300 rounded-full focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
-      />
-      <button id="clear-search" class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 hidden">
-        <i class="fas fa-times"></i>
+  <!-- Category Select - "GAME LEVELS" -->
+  <section class="levels-section">
+    <div class="level-buttons">
+      <button class="level-btn active" data-category="all">
+        <span class="level-number">00</span>
+        <span class="level-name">ALL</span>
       </button>
-      <i class="fas fa-search absolute left-6 top-1/2 -translate-y-1/2 text-gray-400"></i>
+      <button class="level-btn" data-category="talent">
+        <span class="level-number">01</span>
+        <span class="level-name">TALENT</span>
+      </button>
+      <button class="level-btn" data-category="simpsons">
+        <span class="level-number">02</span>
+        <span class="level-name">SIMPSONS</span>
+      </button>
+      <button class="level-btn" data-category="anime">
+        <span class="level-number">03</span>
+        <span class="level-name">ANIME</span>
+      </button>
+      <button class="level-btn" data-category="movie-reference">
+        <span class="level-number">04</span>
+        <span class="level-name">MOVIES</span>
+      </button>
+      <button class="level-btn" data-category="series">
+        <span class="level-number">05</span>
+        <span class="level-name">SERIES</span>
+      </button>
+      <button class="level-btn" data-category="templates">
+        <span class="level-number">06</span>
+        <span class="level-name">TEMPLATES</span>
+      </button>
     </div>
-    <div id="search-results-count" class="text-center text-gray-600 mt-2 hidden"></div>
-  </div>
-</section>
+  </section>
 
-<!-- Category Tabs -->
-<section class="container mx-auto px-4 mb-8">
-  <div class="flex flex-wrap justify-center gap-2 mb-6">
-    <button class="tab-button active" data-category="all">
-      <i class="fas fa-th mr-2"></i>All
-    </button>
-    <button class="tab-button" data-category="talent">
-      <i class="fas fa-briefcase mr-2"></i>Talent
-    </button>
-    <button class="tab-button" data-category="simpsons">
-      <i class="fas fa-tv mr-2"></i>Simpsons
-    </button>
-    <button class="tab-button" data-category="anime">
-      <i class="fas fa-dragon mr-2"></i>Anime
-    </button>
-    <button class="tab-button" data-category="movie-reference">
-      <i class="fas fa-film mr-2"></i>Movies
-    </button>
-    <button class="tab-button" data-category="series">
-      <i class="fas fa-video mr-2"></i>Series
-    </button>
-    <button class="tab-button" data-category="templates">
-      <i class="fas fa-image mr-2"></i>Templates
-    </button>
-  </div>
+  <!-- Meme Gallery - "GAME GRID" -->
+  <section class="gallery-section">
+    <div id="meme-gallery" class="meme-grid">
+      <!-- Memes loaded dynamically -->
+    </div>
 
-  <!-- Meme Gallery -->
-  <div id="meme-gallery" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
-    <!-- Meme cards will be dynamically loaded -->
-  </div>
+    <!-- Loading State -->
+    <div id="loading-state" class="loading-state">
+      <div class="loading-spinner"></div>
+      <p class="loading-text">LOADING MEMES<span class="blink">...</span></p>
+    </div>
 
-  <!-- Loading State -->
-  <div id="loading-state" class="text-center py-12">
-    <i class="fas fa-spinner fa-spin text-4xl text-primary"></i>
-    <p class="mt-4 text-gray-600">Loading memes...</p>
-  </div>
+    <!-- No Results -->
+    <div id="no-results" class="no-results hidden">
+      <div class="no-results-content">
+        <p class="no-results-title">GAME OVER</p>
+        <p class="no-results-subtitle">NO MEMES FOUND</p>
+        <p class="no-results-hint">PRESS ANY KEY TO CONTINUE</p>
+      </div>
+    </div>
+  </section>
 
-  <!-- No Results State -->
-  <div id="no-results" class="text-center py-12 hidden">
-    <i class="fas fa-search text-6xl text-gray-300 mb-4"></i>
-    <h3 class="text-xl font-semibold text-gray-700 mb-2">No memes found</h3>
-    <p class="text-gray-500">Try a different search term or browse by category</p>
-  </div>
-</section>
+  <!-- Arcade Footer -->
+  <footer class="arcade-footer">
+    <div class="footer-content">
+      <a href="https://www.youtube.com/@EnergonHQ" target="_blank" rel="noopener noreferrer" class="youtube-link">
+        <span class="blink">►</span> MORE MEMES ON YOUTUBE <span class="blink">◄</span>
+      </a>
+      <div class="insert-coin">INSERT COIN</div>
+    </div>
+  </footer>
+
+</div>
+<!-- End CRT Screen -->
+
+</div>
+<!-- End Arcade Frame -->
 
 <!-- Toast Notification -->
-<div id="toast" class="fixed bottom-8 left-1/2 -translate-x-1/2 bg-gray-800 text-white px-6 py-3 rounded-lg shadow-lg opacity-0 transition-opacity duration-300 z-50 pointer-events-none">
-  <i class="fas fa-check-circle mr-2"></i>
-  <span id="toast-message">Copied to clipboard!</span>
+<div id="toast" class="toast">
+  <span id="toast-message">COPIED!</span>
 </div>
 
 <style>
-  .tab-button {
-    @apply px-6 py-3 rounded-lg font-semibold transition-all duration-200;
-    @apply bg-gray-100 text-gray-700 hover:bg-gray-200;
+  /* Import Arcade Fonts */
+  @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323:wght@400&display=swap');
+
+  /* CSS Variables - Arcade Palette */
+  :root {
+    --neon-pink: #ff10f0;
+    --neon-cyan: #00ffff;
+    --neon-yellow: #ffff00;
+    --neon-green: #39ff14;
+    --arcade-black: #0a0a0a;
+    --arcade-dark: #1a1a2e;
+    --arcade-gray: #2a2a3e;
+    --screen-glow: rgba(0, 255, 255, 0.1);
   }
 
-  .tab-button.active {
-    @apply bg-primary text-white hover:bg-teal-700;
+  /* Reset and Base */
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
   }
 
-  .meme-card {
-    @apply relative group overflow-hidden rounded-lg border-2 border-gray-200 bg-white transition-all duration-300 hover:shadow-xl hover:border-primary;
+  body {
+    background: var(--arcade-black);
+    font-family: 'VT323', monospace;
+    color: var(--neon-cyan);
+    overflow-x: hidden;
   }
 
-  .meme-card img {
-    @apply w-full aspect-square object-cover;
+  /* Hide default header/footer from layout */
+  .page-header,
+  .site-footer {
+    display: none !important;
   }
 
-  .meme-actions {
-    @apply absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center gap-3;
+  .main-content {
+    padding: 0 !important;
+    max-width: 100% !important;
   }
 
-  .meme-action-btn {
-    @apply bg-white text-gray-800 hover:bg-primary hover:text-white px-4 py-2 rounded-lg font-semibold transition-colors duration-200 flex items-center gap-2;
+  /* Arcade Cabinet Frame */
+  .arcade-frame {
+    max-width: 1600px;
+    margin: 0 auto;
+    padding: 20px;
+    background: linear-gradient(145deg, #1a1a2e 0%, #0f0f1e 100%);
+    border: 8px solid #333;
+    border-radius: 20px;
+    box-shadow:
+      0 0 40px rgba(255, 16, 240, 0.3),
+      0 0 80px rgba(0, 255, 255, 0.2),
+      inset 0 0 60px rgba(0, 0, 0, 0.8);
+  }
+
+  /* CRT Screen */
+  .crt-screen {
+    position: relative;
+    background: var(--arcade-black);
+    border: 4px solid var(--arcade-gray);
+    border-radius: 10px;
+    padding: 30px 20px;
+    overflow: hidden;
+    box-shadow: inset 0 0 100px rgba(0, 255, 255, 0.1);
+  }
+
+  /* CRT Scanlines Effect */
+  .scanlines {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: repeating-linear-gradient(
+      0deg,
+      rgba(0, 0, 0, 0.15),
+      rgba(0, 0, 0, 0.15) 1px,
+      transparent 1px,
+      transparent 2px
+    );
+    pointer-events: none;
+    z-index: 999;
+    animation: scanline-flicker 0.1s infinite;
+  }
+
+  @keyframes scanline-flicker {
+    0%, 100% { opacity: 0.9; }
+    50% { opacity: 0.95; }
+  }
+
+  /* Screen Glow */
+  .screen-glow {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(
+      ellipse at center,
+      var(--screen-glow) 0%,
+      transparent 70%
+    );
+    pointer-events: none;
+    animation: glow-pulse 3s ease-in-out infinite;
+  }
+
+  @keyframes glow-pulse {
+    0%, 100% { opacity: 0.5; }
+    50% { opacity: 0.8; }
+  }
+
+  /* Arcade Header */
+  .arcade-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+    padding: 20px;
+    background: rgba(26, 26, 46, 0.8);
+    border: 3px solid var(--neon-cyan);
+    box-shadow: 0 0 20px rgba(0, 255, 255, 0.5);
+  }
+
+  .score-display,
+  .credits-display {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    font-family: 'Press Start 2P', monospace;
+  }
+
+  .score-display .label,
+  .credits-display .label {
+    font-size: 10px;
+    color: var(--neon-yellow);
+    margin-bottom: 5px;
+  }
+
+  .score-display .value,
+  .credits-display .value {
+    font-size: 20px;
+    color: var(--neon-pink);
+    text-shadow: 0 0 10px var(--neon-pink);
+  }
+
+  .arcade-title {
+    font-family: 'Press Start 2P', monospace;
+    font-size: clamp(16px, 3vw, 32px);
+    color: var(--neon-cyan);
+    text-align: center;
+    text-shadow:
+      0 0 10px var(--neon-cyan),
+      0 0 20px var(--neon-cyan),
+      0 0 30px var(--neon-cyan);
+    letter-spacing: 2px;
+  }
+
+  /* Glitch Effect */
+  .glitch {
+    position: relative;
+    display: inline-block;
+  }
+
+  .glitch::before,
+  .glitch::after {
+    content: attr(data-text);
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+  }
+
+  .glitch::before {
+    left: 2px;
+    text-shadow: -2px 0 var(--neon-pink);
+    clip: rect(24px, 550px, 90px, 0);
+    animation: glitch-anim 3s infinite linear alternate-reverse;
+  }
+
+  .glitch::after {
+    left: -2px;
+    text-shadow: -2px 0 var(--neon-green);
+    clip: rect(85px, 550px, 140px, 0);
+    animation: glitch-anim 2s infinite linear alternate-reverse;
+  }
+
+  @keyframes glitch-anim {
+    0% { clip: rect(39px, 9999px, 78px, 0); }
+    20% { clip: rect(98px, 9999px, 23px, 0); }
+    40% { clip: rect(12px, 9999px, 108px, 0); }
+    60% { clip: rect(81px, 9999px, 51px, 0); }
+    80% { clip: rect(28px, 9999px, 88px, 0); }
+    100% { clip: rect(64px, 9999px, 19px, 0); }
+  }
+
+  /* Section Titles */
+  .section-title {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 16px;
+    text-align: center;
+    color: var(--neon-yellow);
+    margin-bottom: 20px;
+    text-shadow: 0 0 10px var(--neon-yellow);
+  }
+
+  /* Blink Animation */
+  .blink {
+    animation: blink 1s infinite;
+  }
+
+  @keyframes blink {
+    0%, 50%, 100% { opacity: 1; }
+    25%, 75% { opacity: 0; }
+  }
+
+  /* Featured Carousel */
+  .featured-section {
+    margin-bottom: 40px;
+    padding: 20px;
+  }
+
+  .carousel-container {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .carousel-viewport {
+    flex: 1;
+    overflow: hidden;
+    background: rgba(26, 26, 46, 0.5);
+    border: 2px solid var(--neon-pink);
+    padding: 15px;
+    box-shadow: inset 0 0 20px rgba(255, 16, 240, 0.3);
+  }
+
+  .carousel-track {
+    display: flex;
+    gap: 15px;
+    transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
   .carousel-item {
-    @apply flex-shrink-0 w-48 md:w-56 cursor-pointer transition-transform hover:scale-105;
+    flex-shrink: 0;
+    width: 200px;
+    height: 200px;
+    cursor: pointer;
+    position: relative;
+    border: 3px solid var(--neon-cyan);
+    background: var(--arcade-dark);
+    transition: all 0.3s ease;
+  }
+
+  .carousel-item:hover {
+    border-color: var(--neon-pink);
+    transform: scale(1.05) rotate(-2deg);
+    box-shadow: 0 0 30px var(--neon-pink);
+    animation: screen-shake 0.2s;
   }
 
   .carousel-item img {
-    @apply w-full h-48 md:h-56 object-cover rounded-lg border-2 border-gray-200 hover:border-primary transition-colors;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    filter: brightness(0.9) contrast(1.1);
+  }
+
+  @keyframes screen-shake {
+    0%, 100% { transform: translate(0, 0) scale(1.05); }
+    25% { transform: translate(-2px, 2px) scale(1.05); }
+    75% { transform: translate(2px, -2px) scale(1.05); }
+  }
+
+  /* Arcade Buttons */
+  .arcade-btn {
+    width: 50px;
+    height: 50px;
+    background: var(--arcade-dark);
+    border: 3px solid var(--neon-cyan);
+    color: var(--neon-cyan);
+    font-family: 'Press Start 2P', monospace;
+    font-size: 20px;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+    flex-shrink: 0;
+  }
+
+  .arcade-btn:hover {
+    background: var(--neon-cyan);
+    color: var(--arcade-black);
+    box-shadow: 0 0 20px var(--neon-cyan);
+    transform: scale(1.1);
+  }
+
+  .arcade-btn:active {
+    transform: scale(0.95);
+  }
+
+  /* Search Section */
+  .search-section {
+    margin-bottom: 30px;
+    padding: 0 20px;
+  }
+
+  .search-container {
+    background: rgba(26, 26, 46, 0.8);
+    border: 2px solid var(--neon-green);
+    padding: 15px;
+  }
+
+  .search-label {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 10px;
+    color: var(--neon-green);
+    margin-bottom: 10px;
+    text-shadow: 0 0 5px var(--neon-green);
+  }
+
+  .search-input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+
+  .search-input {
+    flex: 1;
+    background: var(--arcade-black);
+    border: 2px solid var(--neon-cyan);
+    color: var(--neon-cyan);
+    font-family: 'VT323', monospace;
+    font-size: 24px;
+    padding: 10px 40px 10px 15px;
+    text-transform: uppercase;
+    box-shadow: inset 0 0 10px rgba(0, 255, 255, 0.3);
+  }
+
+  .search-input::placeholder {
+    color: rgba(0, 255, 255, 0.4);
+  }
+
+  .search-input:focus {
+    outline: none;
+    border-color: var(--neon-pink);
+    box-shadow:
+      inset 0 0 10px rgba(255, 16, 240, 0.3),
+      0 0 15px var(--neon-pink);
+  }
+
+  .clear-btn {
+    position: absolute;
+    right: 10px;
+    background: none;
+    border: none;
+    color: var(--neon-pink);
+    font-size: 24px;
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+
+  .clear-btn.visible {
+    opacity: 1;
+  }
+
+  .clear-btn:hover {
+    color: var(--neon-yellow);
+  }
+
+  /* Level Selection */
+  .levels-section {
+    margin-bottom: 30px;
+    padding: 0 20px;
+  }
+
+  .level-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: center;
+  }
+
+  .level-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+    background: var(--arcade-dark);
+    border: 2px solid var(--neon-yellow);
+    padding: 10px 15px;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: 'Press Start 2P', monospace;
+  }
+
+  .level-number {
+    font-size: 12px;
+    color: var(--neon-yellow);
+  }
+
+  .level-name {
+    font-size: 10px;
+    color: var(--neon-cyan);
+  }
+
+  .level-btn:hover {
+    background: var(--neon-yellow);
+    transform: translateY(-3px);
+    box-shadow: 0 5px 0 var(--neon-pink);
+  }
+
+  .level-btn:hover .level-number,
+  .level-btn:hover .level-name {
+    color: var(--arcade-black);
+  }
+
+  .level-btn.active {
+    background: var(--neon-pink);
+    border-color: var(--neon-pink);
+    box-shadow: 0 0 20px var(--neon-pink);
+  }
+
+  .level-btn.active .level-number,
+  .level-btn.active .level-name {
+    color: white;
+  }
+
+  /* Meme Gallery */
+  .gallery-section {
+    padding: 0 20px;
+    min-height: 400px;
+  }
+
+  .meme-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 15px;
+    margin-bottom: 30px;
+  }
+
+  .meme-card {
+    position: relative;
+    aspect-ratio: 1;
+    background: var(--arcade-dark);
+    border: 3px solid var(--neon-cyan);
+    overflow: hidden;
+    cursor: pointer;
+    transition: all 0.3s;
+  }
+
+  .meme-card:hover {
+    border-color: var(--neon-pink);
+    transform: scale(1.05);
+    box-shadow: 0 0 30px var(--neon-pink);
+    z-index: 10;
+  }
+
+  .meme-card img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    filter: brightness(0.9) contrast(1.1);
+    transition: filter 0.3s;
+  }
+
+  .meme-card:hover img {
+    filter: brightness(1.1) contrast(1.2);
+  }
+
+  .meme-actions {
+    position: absolute;
+    inset: 0;
+    background: rgba(10, 10, 10, 0.9);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+
+  .meme-card:hover .meme-actions {
+    opacity: 1;
+  }
+
+  .meme-action-btn {
+    background: var(--arcade-dark);
+    border: 2px solid var(--neon-cyan);
+    color: var(--neon-cyan);
+    font-family: 'Press Start 2P', monospace;
+    font-size: 8px;
+    padding: 8px 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .meme-action-btn:hover {
+    background: var(--neon-cyan);
+    color: var(--arcade-black);
+    box-shadow: 0 0 15px var(--neon-cyan);
+  }
+
+  /* Loading State */
+  .loading-state {
+    text-align: center;
+    padding: 60px 20px;
+  }
+
+  .loading-spinner {
+    width: 60px;
+    height: 60px;
+    margin: 0 auto 20px;
+    border: 4px solid var(--arcade-gray);
+    border-top: 4px solid var(--neon-pink);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+  }
+
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+
+  .loading-text {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 14px;
+    color: var(--neon-cyan);
+  }
+
+  /* No Results */
+  .no-results {
+    text-align: center;
+    padding: 80px 20px;
+  }
+
+  .no-results.hidden {
+    display: none;
+  }
+
+  .no-results-title {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 24px;
+    color: var(--neon-pink);
+    margin-bottom: 15px;
+    text-shadow: 0 0 20px var(--neon-pink);
+  }
+
+  .no-results-subtitle {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 16px;
+    color: var(--neon-yellow);
+    margin-bottom: 10px;
+  }
+
+  .no-results-hint {
+    font-family: 'VT323', monospace;
+    font-size: 20px;
+    color: var(--neon-cyan);
+  }
+
+  /* Footer */
+  .arcade-footer {
+    margin-top: 40px;
+    padding: 20px;
+    background: rgba(26, 26, 46, 0.8);
+    border-top: 3px solid var(--neon-pink);
+  }
+
+  .footer-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 20px;
+  }
+
+  .youtube-link {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 10px;
+    color: var(--neon-yellow);
+    text-decoration: none;
+    text-shadow: 0 0 10px var(--neon-yellow);
+    transition: all 0.3s;
+  }
+
+  .youtube-link:hover {
+    color: var(--neon-pink);
+    text-shadow: 0 0 15px var(--neon-pink);
+  }
+
+  .insert-coin {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 12px;
+    color: var(--neon-green);
+    text-shadow: 0 0 10px var(--neon-green);
+    animation: blink 1.5s infinite;
+  }
+
+  /* Toast Notification */
+  .toast {
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--arcade-dark);
+    border: 3px solid var(--neon-green);
+    color: var(--neon-green);
+    font-family: 'Press Start 2P', monospace;
+    font-size: 12px;
+    padding: 15px 30px;
+    opacity: 0;
+    transition: opacity 0.3s;
+    pointer-events: none;
+    z-index: 1000;
+    box-shadow: 0 0 30px var(--neon-green);
+  }
+
+  .toast.show {
+    opacity: 1;
+  }
+
+  /* Responsive Design */
+  @media (max-width: 768px) {
+    .arcade-header {
+      flex-direction: column;
+      gap: 15px;
+    }
+
+    .arcade-title {
+      font-size: 16px;
+    }
+
+    .carousel-item {
+      width: 150px;
+      height: 150px;
+    }
+
+    .level-btn {
+      padding: 8px 12px;
+    }
+
+    .level-number {
+      font-size: 10px;
+    }
+
+    .level-name {
+      font-size: 8px;
+    }
+
+    .meme-grid {
+      grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+      gap: 10px;
+    }
+
+    .footer-content {
+      flex-direction: column;
+      text-align: center;
+    }
+  }
+
+  /* Utility */
+  .hidden {
+    display: none !important;
   }
 </style>
 
@@ -161,35 +841,33 @@ description: Your ultimate meme library
   let currentCategory = 'all';
   let searchQuery = '';
   let carouselIndex = 0;
-  const carouselItemsPerView = window.innerWidth >= 1024 ? 5 : window.innerWidth >= 768 ? 4 : 2;
+  const carouselItemsPerView = window.innerWidth >= 1024 ? 5 : window.innerWidth >= 768 ? 3 : 2;
 
   // Initialize the app
   document.addEventListener('DOMContentLoaded', () => {
     initCarousel();
     renderMemes();
-    initTabSwitching();
+    initLevelButtons();
     initSearch();
     startCarouselAutoplay();
+    updateMemeCount();
   });
 
   // Initialize carousel with featured memes
   function initCarousel() {
-    const featuredMemes = allMemes.slice(0, 20); // First 20 memes as featured
+    const featuredMemes = allMemes.slice(0, 20);
     const track = document.getElementById('carousel-track');
 
     featuredMemes.forEach(meme => {
       const item = document.createElement('div');
       item.className = 'carousel-item';
-      item.innerHTML = `
-        <img src="${meme.url}" alt="${meme.name}" loading="lazy" />
-      `;
+      item.innerHTML = `<img src="${meme.url}" alt="${meme.name}" loading="lazy" />`;
       item.addEventListener('click', () => {
         copyToClipboard(meme.url);
       });
       track.appendChild(item);
     });
 
-    // Setup carousel controls
     document.getElementById('carousel-prev').addEventListener('click', () => moveCarousel(-1));
     document.getElementById('carousel-next').addEventListener('click', () => moveCarousel(1));
   }
@@ -200,7 +878,7 @@ description: Your ultimate meme library
     const maxIndex = Math.max(0, items.length - carouselItemsPerView);
 
     carouselIndex = Math.max(0, Math.min(maxIndex, carouselIndex + direction));
-    const offset = carouselIndex * (items[0].offsetWidth + 16); // 16px gap
+    const offset = carouselIndex * (items[0].offsetWidth + 15);
     track.style.transform = `translateX(-${offset}px)`;
   }
 
@@ -215,12 +893,12 @@ description: Your ultimate meme library
         carouselIndex++;
       }
 
-      const offset = carouselIndex * (track.children[0].offsetWidth + 16);
+      const offset = carouselIndex * (track.children[0].offsetWidth + 15);
       track.style.transform = `translateX(-${offset}px)`;
     }, 3000);
   }
 
-  // Render memes based on current filters
+  // Render memes
   function renderMemes() {
     const gallery = document.getElementById('meme-gallery');
     const loading = document.getElementById('loading-state');
@@ -248,28 +926,33 @@ description: Your ultimate meme library
         <img src="${meme.url}" alt="${meme.name}" loading="lazy" />
         <div class="meme-actions">
           <button onclick="copyToClipboard('${meme.url}')" class="meme-action-btn">
-            <i class="fas fa-link"></i>
-            <span class="hidden sm:inline">Copy</span>
+            COPY URL
           </button>
           <button onclick="downloadMeme('${meme.url}', '${meme.name}')" class="meme-action-btn">
-            <i class="fas fa-download"></i>
-            <span class="hidden sm:inline">Download</span>
+            DOWNLOAD
           </button>
         </div>
       </div>
     `).join('');
+
+    updateMemeCount();
   }
 
-  // Tab switching
-  function initTabSwitching() {
-    document.querySelectorAll('.tab-button').forEach(button => {
+  // Level buttons (categories)
+  function initLevelButtons() {
+    document.querySelectorAll('.level-btn').forEach(button => {
       button.addEventListener('click', () => {
-        document.querySelectorAll('.tab-button').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.level-btn').forEach(b => b.classList.remove('active'));
         button.classList.add('active');
         currentCategory = button.dataset.category;
-        searchQuery = ''; // Clear search when switching tabs
+        searchQuery = '';
         document.getElementById('global-search').value = '';
-        document.getElementById('clear-search').classList.add('hidden');
+        document.getElementById('clear-search').classList.remove('visible');
+
+        // Update level display
+        const levelNum = button.querySelector('.level-number').textContent;
+        document.getElementById('current-level').textContent = levelNum;
+
         renderMemes();
       });
     });
@@ -285,13 +968,18 @@ description: Your ultimate meme library
       clearTimeout(debounceTimer);
       searchQuery = e.target.value;
 
-      clearBtn.classList.toggle('hidden', searchQuery === '');
+      if (searchQuery === '') {
+        clearBtn.classList.remove('visible');
+      } else {
+        clearBtn.classList.add('visible');
+      }
 
       debounceTimer = setTimeout(() => {
         if (searchQuery !== '') {
-          currentCategory = 'all'; // Search across all categories
-          document.querySelectorAll('.tab-button').forEach(b => b.classList.remove('active'));
-          document.querySelector('.tab-button[data-category="all"]').classList.add('active');
+          currentCategory = 'all';
+          document.querySelectorAll('.level-btn').forEach(b => b.classList.remove('active'));
+          document.querySelector('.level-btn[data-category="all"]').classList.add('active');
+          document.getElementById('current-level').textContent = '00';
         }
         renderMemes();
       }, 300);
@@ -300,37 +988,41 @@ description: Your ultimate meme library
     clearBtn.addEventListener('click', () => {
       searchInput.value = '';
       searchQuery = '';
-      clearBtn.classList.add('hidden');
+      clearBtn.classList.remove('visible');
       renderMemes();
     });
 
-    // Keyboard shortcuts
     searchInput.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') {
         searchInput.value = '';
         searchQuery = '';
-        clearBtn.classList.add('hidden');
+        clearBtn.classList.remove('visible');
         renderMemes();
       }
     });
   }
 
-  // Copy to clipboard using modern Clipboard API
+  // Update meme count
+  function updateMemeCount() {
+    const count = document.querySelectorAll('.meme-card').length;
+    document.getElementById('meme-count').textContent = String(count).padStart(3, '0');
+  }
+
+  // Copy to clipboard
   async function copyToClipboard(imageUrl) {
     const fullUrl = window.location.origin + imageUrl;
 
     try {
       await navigator.clipboard.writeText(fullUrl);
-      showToast('URL copied to clipboard!');
+      showToast('COPIED!');
     } catch (err) {
-      // Fallback for older browsers
       const tempInput = document.createElement('input');
       document.body.appendChild(tempInput);
       tempInput.value = fullUrl;
       tempInput.select();
       document.execCommand('copy');
       document.body.removeChild(tempInput);
-      showToast('URL copied to clipboard!');
+      showToast('COPIED!');
     }
   }
 
@@ -347,29 +1039,27 @@ description: Your ultimate meme library
         a.click();
         window.URL.revokeObjectURL(url);
         document.body.removeChild(a);
-        showToast('Download started!');
+        showToast('DOWNLOADED!');
       })
       .catch(() => {
-        showToast('Download failed. Try right-click > Save Image.', 'error');
+        showToast('ERROR!');
       });
   }
 
-  // Show toast notification
-  function showToast(message, type = 'success') {
+  // Show toast
+  function showToast(message) {
     const toast = document.getElementById('toast');
     const toastMessage = document.getElementById('toast-message');
 
     toastMessage.textContent = message;
-    toast.style.opacity = '1';
-    toast.style.pointerEvents = 'auto';
+    toast.classList.add('show');
 
     setTimeout(() => {
-      toast.style.opacity = '0';
-      toast.style.pointerEvents = 'none';
-    }, 2500);
+      toast.classList.remove('show');
+    }, 2000);
   }
 
-  // Handle window resize for carousel
+  // Handle window resize
   window.addEventListener('resize', () => {
     const track = document.getElementById('carousel-track');
     if (track.children.length > 0) {
@@ -378,4 +1068,3 @@ description: Your ultimate meme library
     }
   });
 </script>
-
