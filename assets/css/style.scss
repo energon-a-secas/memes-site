@@ -3,6 +3,40 @@
 
 @import 'jekyll-theme-cayman';
 
+/* Performance optimizations */
+* {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Reduce motion for accessibility */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Optimize image rendering */
+img {
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: crisp-edges;
+  will-change: transform;
+}
+
+/* GPU acceleration for animations */
+.meme-card,
+.carousel-item,
+.tab-button {
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  perspective: 1000px;
+}
+
+/* Legacy support - minimal styling */
 .logo {
   height: 50px;
   transition: transform 0.2s ease-in-out;
@@ -12,109 +46,40 @@
   transform: scale(1.1);
 }
 
-.custom-image {
-  border: 2px solid #000;
-  border-radius: 4px;
-  padding: 5px;
-  cursor: pointer; /* Make the image appear clickable */
-}
-
-/* Styling for the popup message */
-.popup-message {
-  visibility: hidden;
-  min-width: 160px;
-  background-color: #333;
-  color: #fff;
-  text-align: center;
-  border-radius: 5px;
-  padding: 10px;
-  position: fixed;
-  z-index: 1000;
-  bottom: 30px;
-  left: 50%;
-  transform: translateX(-50%);
-  font-size: 16px;
-  opacity: 0;
-  transition: opacity 0.3s ease, visibility 0.3s ease;
-}
-
-.popup-message.show {
-  visibility: visible;
-  opacity: 1;
-}
-
-/* Body styling */
-body {
-  font-family: Arial, sans-serif;
-  background-color: #f0f4f8; /* Light background to contrast the section */
-  color: #333;
-}
-
-/* Section styling */
-.image-text-section {
-  background-color: #fffdf6; /* Subtle off-white with a hint of warmth */
-  padding: 60px 20px; /* Top/Bottom and Left/Right padding */
-}
-
-/* Container using CSS Grid */
-.container {
-  display: grid;
-  grid-template-columns: 1fr 1fr; /* Two equal columns */
-  align-items: center; /* Vertically center items */
-  gap: 40px; /* Space between columns */
-  max-width: 1200px; /* Maximum width of the container */
-  margin: 0 auto; /* Center the container horizontally */
-}
-
-/* Image styling */
-.image-container img {
-  width: 100%;
-  height: auto;
-  border-radius: 10px; /* Rounded corners */
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Subtle shadow for depth */
-}
-
-/* Text container styling */
-.text-container {
-  color: #333;
-}
-
-.text-container h2 {
-  color: #1e3a8a; /* Deep blue for the heading */
-  font-size: 2em;
-  margin-bottom: 20px;
-}
-
-.text-container p {
-  font-size: 1.1em;
-  line-height: 1.6;
-  margin-bottom: 30px;
-}
-
-/* Call-to-Action Button styling */
-.cta-button {
-  display: inline-block;
-  padding: 12px 24px;
-  background-color: #fbbf24; /* Vibrant yellow */
-  color: #fff;
-  text-decoration: none;
-  border-radius: 5px;
-  font-weight: bold;
-  transition: background-color 0.3s ease;
-}
-
-.cta-button:hover {
-  background-color: #f59e0b; /* Darker yellow on hover */
-}
-
-/* Responsive Design for smaller screens */
-@media (max-width: 768px) {
-  .container {
-    grid-template-columns: 1fr; /* Single column layout */
-    text-align: center; /* Center align text */
+/* Skeleton loader for images */
+@keyframes shimmer {
+  0% {
+    background-position: -468px 0;
   }
+  100% {
+    background-position: 468px 0;
+  }
+}
 
-  .cta-button {
-    margin: 0 auto; /* Center the button */
+.skeleton {
+  animation: shimmer 1.2s ease-in-out infinite;
+  background: linear-gradient(to right, #f0f0f0 4%, #e0e0e0 25%, #f0f0f0 36%);
+  background-size: 1000px 100%;
+}
+
+/* Smooth scrolling */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Focus visible for accessibility */
+*:focus-visible {
+  outline: 2px solid #157878;
+  outline-offset: 2px;
+}
+
+/* Print styles */
+@media print {
+  .page-header,
+  footer,
+  .meme-actions,
+  #global-search,
+  .tab-button {
+    display: none !important;
   }
 }

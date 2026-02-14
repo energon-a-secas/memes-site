@@ -1,5 +1,34 @@
 title: Meme Delivery Platform
-description: 
+description: Your go-to library for work memes, Simpsons, anime, movie references, and meme templates. Browse, copy, and share instantly.
+url: https://lucianoadonis.github.io
+baseurl: /talent
 theme: jekyll-theme-cayman # https://pages.github.com/themes/
+
+# SEO Settings
+author: EnergonHQ
+twitter:
+  username: EnergonHQ
+  card: summary_large_image
+social:
+  name: Meme Delivery Platform
+  links:
+    - https://www.youtube.com/@EnergonHQ
+
+# Site metadata
+lang: en-US
+logo: /assets/images/cyberpunk-dog.png
+
 kramdown:
   toc_levels: 2..3
+
+# Plugins
+plugins:
+  - jekyll-seo-tag
+  - jekyll-sitemap
+
+# Collections for better organization
+defaults:
+  - scope:
+      path: ""
+    values:
+      image: /assets/images/cyberpunk-dog.png

@@ -1,0 +1,25 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(file:*)",
+      "mcp__plugin_playwright_playwright__browser_navigate",
+      "Bash(python3:*)",
+      "Bash(for f in *.png)",
+      "Bash(do echo \"File: $f\")",
+      "Bash(done)",
+      "Bash(chmod:*)",
+      "Bash(cat:*)",
+      "Bash(wc:*)",
+      "Bash(make:*)",
+      "Bash(npm install)",
+      "Bash(fd:*)",
+      "Bash(bundle exec jekyll serve:*)",
+      "Bash(bundle install:*)",
+      "Bash(ruby:*)"
+    ]
+  },
+  "enableAllProjectMcpServers": true,
+  "enabledMcpjsonServers": [
+    "context7"
+  ]
+}
