@@ -203,6 +203,31 @@
         setTimeout(() => { toast.style.opacity = '0'; }, 2500);
       }
 
+      // Copy image to clipboard from URL (for hover buttons)
+      function copyImageFromUrl(imageUrl) {
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          canvas.width = img.naturalWidth;
+          canvas.height = img.naturalHeight;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0);
+          canvas.toBlob(blob => {
+            if (!blob) { showLayoutToast('Could not copy image'); return; }
+            navigator.clipboard.write([
+              new ClipboardItem({ 'image/png': blob })
+            ]).then(() => {
+              showLayoutToast('Image copied to clipboard!');
+            }).catch(() => {
+              showLayoutToast('Browser does not support image copy');
+            });
+          }, 'image/png');
+        };
+        img.onerror = () => showLayoutToast('Could not load image');
+        img.src = imageUrl;
+      }
+
       // Copy meme URL (convenience for category pages)
       function copyMemeUrl(imageUrl) {
         const fullUrl = window.location.origin + imageUrl;

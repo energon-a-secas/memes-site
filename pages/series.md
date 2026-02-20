@@ -27,8 +27,8 @@ description: TV series references for binge-watchers
             <button onclick="event.stopPropagation(); copyMemeUrl('{{ image.path | relative_url }}')" class="meme-btn">
               <i class="fas fa-link"></i> <span class="hidden sm:inline">Copy</span>
             </button>
-            <button onclick="event.stopPropagation(); downloadMemeFile('{{ image.path | relative_url }}', '{{ image.name }}')" class="meme-btn">
-              <i class="fas fa-download"></i> <span class="hidden sm:inline">Download</span>
+            <button onclick="event.stopPropagation(); copyImageFromUrl('{{ image.path | relative_url }}')" class="meme-btn meme-btn-img">
+              <i class="fas fa-image"></i> <span class="hidden sm:inline">Copy Image</span>
             </button>
           </div>
         </div>

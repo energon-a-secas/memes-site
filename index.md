@@ -157,7 +157,7 @@ standalone: true
       <a href="https://www.youtube.com/@energon-hq" target="_blank" rel="noopener noreferrer" class="youtube-link">
         <span class="blink">&#9658;</span> MORE MEMES ON YOUTUBE <span class="blink">&#9668;</span>
       </a>
-      <div class="insert-coin">INSERT COIN</div>
+      <div class="insert-coin" onclick="insertCoin(this)">INSERT COIN</div>
     </div>
   </footer>
 
@@ -812,6 +812,74 @@ standalone: true
     color: var(--success);
     text-shadow: 0 0 10px var(--success-glow);
     animation: blink 1.5s infinite;
+    cursor: pointer;
+    user-select: none;
+    transition: transform 0.1s;
+  }
+
+  .insert-coin:active {
+    transform: scale(0.95);
+  }
+
+  /* Coin drop animation */
+  .coin {
+    position: fixed;
+    z-index: 9998;
+    font-size: 40px;
+    pointer-events: none;
+    animation: coin-drop 1s cubic-bezier(0.4, 0, 1, 1) forwards;
+    filter: drop-shadow(0 0 10px rgba(255, 200, 0, 0.8));
+  }
+
+  @keyframes coin-drop {
+    0% {
+      opacity: 1;
+      transform: translateY(-80px) rotateY(0deg) scale(1);
+    }
+    60% {
+      opacity: 1;
+      transform: translateY(0px) rotateY(540deg) scale(1);
+    }
+    75% {
+      opacity: 1;
+      transform: translateY(-15px) rotateY(720deg) scale(0.9);
+    }
+    90% {
+      opacity: 1;
+      transform: translateY(0px) rotateY(900deg) scale(0.7);
+    }
+    100% {
+      opacity: 0;
+      transform: translateY(5px) rotateY(1080deg) scale(0);
+    }
+  }
+
+  /* Screen flash on coin insert */
+  .screen-flash {
+    position: fixed;
+    inset: 0;
+    background: var(--primary);
+    z-index: 9997;
+    pointer-events: none;
+    animation: flash 0.4s ease-out forwards;
+  }
+
+  @keyframes flash {
+    0% { opacity: 0.3; }
+    100% { opacity: 0; }
+  }
+
+  /* CRT shake */
+  .crt-shake {
+    animation: crt-shake 0.3s ease-out;
+  }
+
+  @keyframes crt-shake {
+    0%, 100% { transform: translate(0, 0); }
+    20% { transform: translate(-3px, 2px); }
+    40% { transform: translate(3px, -2px); }
+    60% { transform: translate(-2px, -1px); }
+    80% { transform: translate(2px, 1px); }
   }
 
   /* Toast Notification */
@@ -1082,8 +1150,8 @@ standalone: true
           <button onclick="event.stopPropagation(); copyToClipboard('${meme.url}')" class="meme-action-btn">
             COPY URL
           </button>
-          <button onclick="event.stopPropagation(); downloadMeme('${meme.url}', '${meme.name.replace(/'/g, "\\'")}')" class="meme-action-btn">
-            DOWNLOAD
+          <button onclick="event.stopPropagation(); copyImageFromUrl('${meme.url}')" class="meme-action-btn copy-img-btn">
+            COPY IMAGE
           </button>
         </div>
       </div>
@@ -1200,6 +1268,31 @@ standalone: true
       });
   }
 
+  // Copy image to clipboard from URL
+  function copyImageFromUrl(imageUrl) {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = img.naturalWidth;
+      canvas.height = img.naturalHeight;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0);
+      canvas.toBlob(blob => {
+        if (!blob) { showToast('ERROR!'); return; }
+        navigator.clipboard.write([
+          new ClipboardItem({ 'image/png': blob })
+        ]).then(() => {
+          showToast('IMAGE COPIED!');
+        }).catch(() => {
+          showToast('NOT SUPPORTED!');
+        });
+      }, 'image/png');
+    };
+    img.onerror = () => showToast('ERROR!');
+    img.src = imageUrl;
+  }
+
   // Arcade Lightbox
   function openArcadeLightbox(url, name) {
     lightboxUrl = url;
@@ -1245,6 +1338,58 @@ standalone: true
 
   function arcadeLightboxDownload() {
     downloadMeme(lightboxUrl, lightboxName);
+  }
+
+  // Insert Coin effect
+  let coinCredits = 0;
+  function insertCoin(el) {
+    coinCredits++;
+
+    // Coin drop animation
+    const rect = el.getBoundingClientRect();
+    const coin = document.createElement('div');
+    coin.className = 'coin';
+    coin.textContent = '\u{1FA99}';
+    coin.style.left = (rect.left + rect.width / 2 - 20) + 'px';
+    coin.style.top = (rect.top - 40) + 'px';
+    document.body.appendChild(coin);
+    setTimeout(() => coin.remove(), 1000);
+
+    // Screen flash
+    const flash = document.createElement('div');
+    flash.className = 'screen-flash';
+    document.body.appendChild(flash);
+    setTimeout(() => flash.remove(), 400);
+
+    // CRT shake
+    const crt = document.querySelector('.crt-screen');
+    crt.classList.add('crt-shake');
+    setTimeout(() => crt.classList.remove('crt-shake'), 300);
+
+    // Update text temporarily
+    const originalText = el.textContent;
+    el.style.animation = 'none';
+    el.style.color = 'var(--accent)';
+    el.style.textShadow = '0 0 15px var(--accent-glow)';
+    el.textContent = 'CREDIT ' + String(coinCredits).padStart(2, '0');
+
+    setTimeout(() => {
+      el.textContent = originalText;
+      el.style.color = '';
+      el.style.textShadow = '';
+      el.style.animation = '';
+    }, 1500);
+
+    // Toast
+    const messages = [
+      'COIN INSERTED!',
+      'READY PLAYER ONE!',
+      'GAME ON!',
+      'CREDITS: ' + String(coinCredits).padStart(2, '0'),
+      'LEVEL UP!',
+      'POWER UP!',
+    ];
+    showToast(messages[Math.floor(Math.random() * messages.length)]);
   }
 
   // ESC key to close lightbox
