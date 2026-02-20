@@ -1,18 +1,18 @@
 ---
 layout: custom
-title: Meme Templates
-description: High quality meme templates for creating your own
+title: General Memes
+description: Versatile memes for every occasion
 ---
 
 <section class="container mx-auto px-4 py-8">
   <div class="mb-8 text-center">
-    <h2 class="text-3xl font-bold text-white mb-3">Meme Templates</h2>
-    <p class="text-[#cacaca] text-lg">High quality templates for creating your own memes</p>
+    <h2 class="text-3xl font-bold text-white mb-3">General Memes</h2>
+    <p class="text-[#cacaca] text-lg">Versatile memes for every occasion</p>
   </div>
 
   <div class="max-w-xl mx-auto mb-8">
     <div class="relative">
-      <input type="text" id="category-search" placeholder="Search templates..."
+      <input type="text" id="category-search" placeholder="Search general memes..."
         class="w-full px-6 py-3 pl-12 bg-[#0a1628] border-2 border-[rgba(0,99,229,0.3)] rounded-lg text-[#f9f9f9] placeholder-gray-500 focus:border-[#0063e5] focus:outline-none focus:ring-2 focus:ring-[rgba(0,99,229,0.3)] transition-all" />
       <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-500"></i>
     </div>
@@ -20,7 +20,7 @@ description: High quality meme templates for creating your own
 
   <div id="meme-gallery" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
     {% for image in site.static_files %}
-      {% if image.path contains '/assets/images/templates/' %}
+      {% if image.path contains '/assets/images/general/' %}
         <div class="meme-card group" data-name="{{ image.name | downcase }}" onclick="openLightbox('{{ image.path | relative_url }}', '{{ image.name }}')">
           <img src="{{ image.path | relative_url }}" alt="{{ image.name }}" loading="lazy" />
           <div class="meme-overlay">

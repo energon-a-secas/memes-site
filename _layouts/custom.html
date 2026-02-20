@@ -7,7 +7,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com">
     <link rel="preload" href="https://fonts.googleapis.com/css?family=Open+Sans:400,700&display=swap" as="style" type="text/css" crossorigin>
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="theme-color" content="#157878">
+    <meta name="theme-color" content="#040714">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 
     <!-- Tailwind CSS -->
@@ -17,8 +17,12 @@
         theme: {
           extend: {
             colors: {
-              primary: '#157878',
-              accent: '#fbbf24',
+              primary: '#0063e5',
+              'primary-light': '#0080ff',
+              accent: '#ff8c00',
+              'bg-deep': '#040714',
+              'bg-dark': '#0a1628',
+              'bg-surface': '#162040',
             }
           }
         }
@@ -37,61 +41,184 @@
       "@type": "WebSite",
       "name": "{{ site.title }}",
       "description": "{{ site.description }}",
-      "url": "{{ site.url }}{{ site.baseurl }}",
-      "author": {
-        "@type": "Organization",
-        "name": "{{ site.author }}"
-      },
-      "potentialAction": {
-        "@type": "SearchAction",
-        "target": "{{ site.url }}{{ site.baseurl }}/?q={search_term_string}",
-        "query-input": "required name=search_term_string"
-      }
+      "url": "{{ site.url }}{{ site.baseurl }}"
     }
     </script>
 
     {% include head-custom.html %}
   </head>
-  <body class="bg-gray-50 text-gray-900">
+  <body class="bg-[#040714] text-gray-100">
     <a id="skip-to-content" href="#content">Skip to the content.</a>
 
-    <header class="bg-gradient-to-r from-primary to-teal-600 text-white shadow-lg" role="banner">
-      <div class="container mx-auto px-4 py-6">
+    {% unless page.standalone %}
+    <header class="bg-[#040714]/95 backdrop-blur-md border-b border-[rgba(0,99,229,0.3)] sticky top-0 z-50" role="banner">
+      <div class="container mx-auto px-4 py-4">
         <div class="flex justify-between items-center">
           <div>
-            <h1 class="text-3xl md:text-4xl font-bold mb-2">{{ page.title | default: site.title | default: site.github.repository_name }}</h1>
-            <h2 class="text-lg md:text-xl opacity-90">{{ page.description | default: site.description | default: site.github.project_tagline }}</h2>
+            <h1 class="text-2xl md:text-3xl font-bold text-white">{{ page.title | default: site.title }}</h1>
+            <h2 class="text-sm md:text-base text-[#cacaca]">{{ page.description | default: site.description }}</h2>
           </div>
-          <div class="flex items-center gap-4">
+          <div class="flex items-center gap-3">
             <a href="https://www.youtube.com/@EnergonHQ" target="_blank" rel="noopener noreferrer"
-               class="flex items-center gap-2 bg-red-600 hover:bg-red-700 transition-colors px-4 py-2 rounded-lg text-white font-semibold"
+               class="flex items-center gap-2 bg-red-600 hover:bg-red-700 transition-colors px-3 py-2 rounded-lg text-white text-sm font-semibold"
                aria-label="Visit EnergonHQ YouTube Channel">
-              <i class="fab fa-youtube text-xl"></i>
-              <span class="hidden md:inline">More Memes</span>
+              <i class="fab fa-youtube text-lg"></i>
+              <span class="hidden md:inline">YouTube</span>
             </a>
             {% if page.url != "/" %}
-              <a href="/talent" class="bg-white text-primary hover:bg-gray-100 transition-colors px-4 py-2 rounded-lg font-semibold">
-                <i class="fas fa-arrow-left mr-2"></i>Back
+              <a href="{{ '/' | relative_url }}" class="bg-[#0063e5] hover:bg-[#0080ff] transition-colors px-3 py-2 rounded-lg text-white text-sm font-semibold">
+                <i class="fas fa-arrow-left mr-1"></i>Back
               </a>
             {% endif %}
           </div>
         </div>
       </div>
     </header>
+    {% endunless %}
 
     <main id="content" class="min-h-screen" role="main">
       {{ content }}
-
-      <footer class="bg-gray-800 text-white py-8 mt-12">
-        <div class="container mx-auto px-4 text-center">
-          <p class="mb-2">
-            <a href="https://www.youtube.com/@EnergonHQ" target="_blank" rel="noopener noreferrer" class="text-accent hover:text-yellow-300 transition-colors">
-              <i class="fab fa-youtube mr-2"></i>EnergonHQ on YouTube
-            </a>
-          </p>
-          <p class="text-gray-400 text-sm">Meme Delivery Platform &copy; 2026</p>
-        </div>
-      </footer>
     </main>
+
+    {% unless page.standalone %}
+    <footer class="bg-[#0a1628] border-t border-[rgba(0,99,229,0.2)] text-white py-6 mt-8">
+      <div class="container mx-auto px-4 text-center">
+        <p class="mb-2">
+          <a href="https://www.youtube.com/@EnergonHQ" target="_blank" rel="noopener noreferrer" class="text-[#0063e5] hover:text-[#0080ff] transition-colors">
+            <i class="fab fa-youtube mr-2"></i>EnergonHQ on YouTube
+          </a>
+        </p>
+        <p class="text-gray-500 text-sm">Meme Delivery Platform &copy; 2026</p>
+      </div>
+    </footer>
+    {% endunless %}
+
+    <!-- Lightbox Popup -->
+    <div id="lightbox" class="fixed inset-0 z-[9999] bg-black/90 backdrop-blur-sm hidden items-center justify-center" onclick="closeLightbox(event)">
+      <button onclick="closeLightbox(event, true)" class="absolute top-4 right-4 text-white/80 hover:text-white text-4xl transition-colors z-10" aria-label="Close">&times;</button>
+      <div class="max-w-[90vw] max-h-[90vh] relative flex flex-col items-center" onclick="event.stopPropagation()">
+        <img id="lightbox-img" src="" alt="" class="max-w-full max-h-[80vh] object-contain rounded-lg shadow-2xl" />
+        <div class="flex justify-center gap-3 mt-4">
+          <button onclick="lightboxCopy()" class="bg-[#0063e5] hover:bg-[#0080ff] text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors flex items-center gap-2">
+            <i class="fas fa-link"></i> Copy URL
+          </button>
+          <button onclick="lightboxDownload()" class="bg-[#ff8c00] hover:bg-orange-500 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors flex items-center gap-2">
+            <i class="fas fa-download"></i> Download
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="layout-toast" class="fixed bottom-6 left-1/2 -translate-x-1/2 bg-[#0a1628] border border-[rgba(0,99,229,0.4)] text-white px-5 py-3 rounded-lg shadow-lg opacity-0 transition-opacity duration-300 z-[10000] pointer-events-none">
+      <i class="fas fa-check-circle mr-2 text-[#0063e5]"></i>
+      <span id="layout-toast-message">Copied!</span>
+    </div>
+
+    <script>
+      // Lightbox state
+      let currentLightboxUrl = '';
+      let currentLightboxName = '';
+
+      function openLightbox(url, name) {
+        currentLightboxUrl = url;
+        currentLightboxName = name;
+        const lightbox = document.getElementById('lightbox');
+        const img = document.getElementById('lightbox-img');
+        img.src = url;
+        img.alt = name || '';
+        lightbox.classList.remove('hidden');
+        lightbox.classList.add('flex');
+        document.body.style.overflow = 'hidden';
+      }
+
+      function closeLightbox(event, force) {
+        if (force || (event && event.target === document.getElementById('lightbox'))) {
+          const lightbox = document.getElementById('lightbox');
+          lightbox.classList.add('hidden');
+          lightbox.classList.remove('flex');
+          document.body.style.overflow = '';
+        }
+      }
+
+      function lightboxCopy() {
+        const fullUrl = window.location.origin + currentLightboxUrl;
+        navigator.clipboard.writeText(fullUrl).then(() => {
+          showLayoutToast('URL copied to clipboard!');
+        }).catch(() => {
+          const temp = document.createElement('input');
+          document.body.appendChild(temp);
+          temp.value = fullUrl;
+          temp.select();
+          document.execCommand('copy');
+          document.body.removeChild(temp);
+          showLayoutToast('URL copied to clipboard!');
+        });
+      }
+
+      function lightboxDownload() {
+        fetch(currentLightboxUrl)
+          .then(r => r.blob())
+          .then(blob => {
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = currentLightboxName;
+            document.body.appendChild(a);
+            a.click();
+            URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+            showLayoutToast('Download started!');
+          })
+          .catch(() => showLayoutToast('Download failed'));
+      }
+
+      function showLayoutToast(message) {
+        const toast = document.getElementById('layout-toast');
+        const msg = document.getElementById('layout-toast-message');
+        msg.textContent = message;
+        toast.style.opacity = '1';
+        setTimeout(() => { toast.style.opacity = '0'; }, 2500);
+      }
+
+      // Copy meme URL (convenience for category pages)
+      function copyMemeUrl(imageUrl) {
+        const fullUrl = window.location.origin + imageUrl;
+        navigator.clipboard.writeText(fullUrl).then(() => {
+          showLayoutToast('URL copied to clipboard!');
+        }).catch(() => {
+          const temp = document.createElement('input');
+          document.body.appendChild(temp);
+          temp.value = fullUrl;
+          temp.select();
+          document.execCommand('copy');
+          document.body.removeChild(temp);
+          showLayoutToast('URL copied to clipboard!');
+        });
+      }
+
+      // Download meme (convenience for category pages)
+      function downloadMemeFile(imageUrl, imageName) {
+        fetch(imageUrl)
+          .then(r => r.blob())
+          .then(blob => {
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = imageName;
+            document.body.appendChild(a);
+            a.click();
+            URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+            showLayoutToast('Download started!');
+          })
+          .catch(() => showLayoutToast('Download failed. Try right-click > Save Image.'));
+      }
+
+      // ESC key to close lightbox
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') closeLightbox(null, true);
+      });
+    </script>
   </body>
 </html>

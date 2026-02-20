@@ -23,7 +23,8 @@
       "Bash(asdf plugin add:*)",
       "Bash(asdf list:*)",
       "Bash(asdf install:*)",
-      "Bash(docker run:*)"
+      "Bash(docker run:*)",
+      "Bash(xargs:*)"
     ]
   },
   "enableAllProjectMcpServers": true,

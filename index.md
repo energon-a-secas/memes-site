@@ -1,7 +1,8 @@
 ---
 layout: custom
-title: MEME ARCADE
-description: INSERT COIN TO CONTINUE
+title: Meme Delivery Platform
+description: Your go-to memes and references, always within reach
+standalone: true
 ---
 
 <!-- Arcade Cabinet Frame -->
@@ -22,24 +23,27 @@ description: INSERT COIN TO CONTINUE
       <span class="label">MEMES</span>
       <span class="value" id="meme-count">000</span>
     </div>
-    <h1 class="arcade-title">
-      <span class="glitch" data-text="MEME ARCADE">MEME ARCADE</span>
-    </h1>
+    <div class="arcade-title-block">
+      <h1 class="arcade-title">
+        <span class="glitch" data-text="MEME DELIVERY PLATFORM">MEME DELIVERY PLATFORM</span>
+      </h1>
+      <p class="arcade-subtitle">YOUR GO-TO MEMES AND REFERENCES, ALWAYS WITHIN REACH</p>
+    </div>
     <div class="credits-display">
       <span class="label">LEVEL</span>
       <span class="value" id="current-level">01</span>
     </div>
   </header>
 
-  <!-- Featured Memes Carousel - "HIGH SCORES" -->
+  <!-- Featured Memes Carousel -->
   <section class="featured-section">
     <h2 class="section-title">
-      <span class="blink">★</span> FEATURED MEMES <span class="blink">★</span>
+      <span class="blink">&#9733;</span> FEATURED MEMES <span class="blink">&#9733;</span>
     </h2>
 
     <div class="carousel-container">
       <button id="carousel-prev" class="arcade-btn arcade-btn-left" aria-label="Previous">
-        <span>◄</span>
+        <span>&#9668;</span>
       </button>
 
       <div class="carousel-viewport">
@@ -49,7 +53,7 @@ description: INSERT COIN TO CONTINUE
       </div>
 
       <button id="carousel-next" class="arcade-btn arcade-btn-right" aria-label="Next">
-        <span>►</span>
+        <span>&#9658;</span>
       </button>
     </div>
   </section>
@@ -66,12 +70,12 @@ description: INSERT COIN TO CONTINUE
           class="search-input"
           autocomplete="off"
         />
-        <button id="clear-search" class="clear-btn" aria-label="Clear search">✕</button>
+        <button id="clear-search" class="clear-btn" aria-label="Clear search">&#10005;</button>
       </div>
     </div>
   </section>
 
-  <!-- Category Select - "GAME LEVELS" -->
+  <!-- Category Select -->
   <section class="levels-section">
     <div class="level-buttons">
       <button class="level-btn active" data-category="all">
@@ -102,10 +106,30 @@ description: INSERT COIN TO CONTINUE
         <span class="level-number">06</span>
         <span class="level-name">TEMPLATES</span>
       </button>
+      <button class="level-btn" data-category="general">
+        <span class="level-number">07</span>
+        <span class="level-name">GENERAL</span>
+      </button>
+      <button class="level-btn" data-category="country">
+        <span class="level-number">08</span>
+        <span class="level-name">COUNTRY</span>
+      </button>
+      <button class="level-btn" data-category="mood">
+        <span class="level-number">09</span>
+        <span class="level-name">MOOD</span>
+      </button>
+      <button class="level-btn" data-category="other-references">
+        <span class="level-number">10</span>
+        <span class="level-name">OTHER</span>
+      </button>
+      <button class="level-btn" data-category="games">
+        <span class="level-number">11</span>
+        <span class="level-name">GAMES</span>
+      </button>
     </div>
   </section>
 
-  <!-- Meme Gallery - "GAME GRID" -->
+  <!-- Meme Gallery -->
   <section class="gallery-section">
     <div id="meme-gallery" class="meme-grid">
       <!-- Memes loaded dynamically -->
@@ -122,7 +146,7 @@ description: INSERT COIN TO CONTINUE
       <div class="no-results-content">
         <p class="no-results-title">GAME OVER</p>
         <p class="no-results-subtitle">NO MEMES FOUND</p>
-        <p class="no-results-hint">PRESS ANY KEY TO CONTINUE</p>
+        <p class="no-results-hint">TRY A DIFFERENT SEARCH</p>
       </div>
     </div>
   </section>
@@ -131,7 +155,7 @@ description: INSERT COIN TO CONTINUE
   <footer class="arcade-footer">
     <div class="footer-content">
       <a href="https://www.youtube.com/@EnergonHQ" target="_blank" rel="noopener noreferrer" class="youtube-link">
-        <span class="blink">►</span> MORE MEMES ON YOUTUBE <span class="blink">◄</span>
+        <span class="blink">&#9658;</span> MORE MEMES ON YOUTUBE <span class="blink">&#9668;</span>
       </a>
       <div class="insert-coin">INSERT COIN</div>
     </div>
@@ -143,6 +167,18 @@ description: INSERT COIN TO CONTINUE
 </div>
 <!-- End Arcade Frame -->
 
+<!-- Arcade Lightbox -->
+<div id="arcade-lightbox" class="arcade-lightbox" onclick="closeArcadeLightbox(event)">
+  <button class="lightbox-close" onclick="closeArcadeLightbox(event, true)" aria-label="Close">&times;</button>
+  <div class="lightbox-content" onclick="event.stopPropagation()">
+    <img id="arcade-lightbox-img" src="" alt="" />
+    <div class="lightbox-actions">
+      <button onclick="arcadeLightboxCopy()" class="meme-action-btn">COPY URL</button>
+      <button onclick="arcadeLightboxDownload()" class="meme-action-btn">DOWNLOAD</button>
+    </div>
+  </div>
+</div>
+
 <!-- Toast Notification -->
 <div id="toast" class="toast">
   <span id="toast-message">COPIED!</span>
@@ -152,16 +188,24 @@ description: INSERT COIN TO CONTINUE
   /* Import Arcade Fonts */
   @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323:wght@400&display=swap');
 
-  /* CSS Variables - Arcade Palette */
+  /* CSS Variables - Calculator-Inspired Arcade Palette */
   :root {
-    --neon-pink: #ff10f0;
-    --neon-cyan: #00ffff;
-    --neon-yellow: #ffff00;
-    --neon-green: #39ff14;
-    --arcade-black: #0a0a0a;
-    --arcade-dark: #1a1a2e;
-    --arcade-gray: #2a2a3e;
-    --screen-glow: rgba(0, 255, 255, 0.1);
+    --primary: #0063e5;
+    --primary-light: #0080ff;
+    --primary-glow: rgba(0, 99, 229, 0.4);
+    --accent: #ff8c00;
+    --accent-light: #ffaa33;
+    --accent-glow: rgba(255, 140, 0, 0.4);
+    --success: #00d68f;
+    --success-glow: rgba(0, 214, 143, 0.4);
+    --bg-deep: #040714;
+    --bg-dark: #0a1628;
+    --bg-surface: #162040;
+    --border-color: rgba(0, 99, 229, 0.4);
+    --border-subtle: rgba(255, 255, 255, 0.1);
+    --text-primary: #f9f9f9;
+    --text-secondary: #cacaca;
+    --screen-glow: rgba(0, 99, 229, 0.15);
   }
 
   /* Reset and Base */
@@ -172,9 +216,9 @@ description: INSERT COIN TO CONTINUE
   }
 
   body {
-    background: var(--arcade-black);
+    background: var(--bg-deep);
     font-family: 'VT323', monospace;
-    color: var(--neon-cyan);
+    color: var(--text-primary);
     overflow-x: hidden;
   }
 
@@ -194,24 +238,24 @@ description: INSERT COIN TO CONTINUE
     max-width: 1600px;
     margin: 0 auto;
     padding: 20px;
-    background: linear-gradient(145deg, #1a1a2e 0%, #0f0f1e 100%);
-    border: 8px solid #333;
+    background: linear-gradient(145deg, var(--bg-dark) 0%, var(--bg-deep) 100%);
+    border: 4px solid rgba(0, 99, 229, 0.3);
     border-radius: 20px;
     box-shadow:
-      0 0 40px rgba(255, 16, 240, 0.3),
-      0 0 80px rgba(0, 255, 255, 0.2),
+      0 0 40px var(--primary-glow),
+      0 0 80px rgba(0, 99, 229, 0.15),
       inset 0 0 60px rgba(0, 0, 0, 0.8);
   }
 
   /* CRT Screen */
   .crt-screen {
     position: relative;
-    background: var(--arcade-black);
-    border: 4px solid var(--arcade-gray);
+    background: var(--bg-deep);
+    border: 2px solid var(--bg-surface);
     border-radius: 10px;
     padding: 30px 20px;
     overflow: hidden;
-    box-shadow: inset 0 0 100px rgba(0, 255, 255, 0.1);
+    box-shadow: inset 0 0 100px var(--screen-glow);
   }
 
   /* CRT Scanlines Effect */
@@ -223,8 +267,8 @@ description: INSERT COIN TO CONTINUE
     height: 100%;
     background: repeating-linear-gradient(
       0deg,
-      rgba(0, 0, 0, 0.15),
-      rgba(0, 0, 0, 0.15) 1px,
+      rgba(0, 0, 0, 0.1),
+      rgba(0, 0, 0, 0.1) 1px,
       transparent 1px,
       transparent 2px
     );
@@ -266,9 +310,10 @@ description: INSERT COIN TO CONTINUE
     align-items: center;
     margin-bottom: 30px;
     padding: 20px;
-    background: rgba(26, 26, 46, 0.8);
-    border: 3px solid var(--neon-cyan);
-    box-shadow: 0 0 20px rgba(0, 255, 255, 0.5);
+    background: rgba(10, 22, 40, 0.8);
+    border: 2px solid var(--primary);
+    border-radius: 8px;
+    box-shadow: 0 0 20px var(--primary-glow);
   }
 
   .score-display,
@@ -282,27 +327,41 @@ description: INSERT COIN TO CONTINUE
   .score-display .label,
   .credits-display .label {
     font-size: 10px;
-    color: var(--neon-yellow);
+    color: var(--primary-light);
     margin-bottom: 5px;
   }
 
   .score-display .value,
   .credits-display .value {
     font-size: 20px;
-    color: var(--neon-pink);
-    text-shadow: 0 0 10px var(--neon-pink);
+    color: var(--accent);
+    text-shadow: 0 0 10px var(--accent-glow);
+  }
+
+  .arcade-title-block {
+    text-align: center;
+    flex: 1;
+    padding: 0 15px;
   }
 
   .arcade-title {
     font-family: 'Press Start 2P', monospace;
-    font-size: clamp(16px, 3vw, 32px);
-    color: var(--neon-cyan);
+    font-size: clamp(10px, 2vw, 20px);
+    color: var(--text-primary);
     text-align: center;
     text-shadow:
-      0 0 10px var(--neon-cyan),
-      0 0 20px var(--neon-cyan),
-      0 0 30px var(--neon-cyan);
+      0 0 10px var(--primary-glow),
+      0 0 20px var(--primary-glow),
+      0 0 30px rgba(0, 99, 229, 0.2);
     letter-spacing: 2px;
+    margin-bottom: 8px;
+  }
+
+  .arcade-subtitle {
+    font-family: 'VT323', monospace;
+    font-size: clamp(12px, 1.5vw, 18px);
+    color: var(--text-secondary);
+    letter-spacing: 1px;
   }
 
   /* Glitch Effect */
@@ -323,14 +382,14 @@ description: INSERT COIN TO CONTINUE
 
   .glitch::before {
     left: 2px;
-    text-shadow: -2px 0 var(--neon-pink);
+    text-shadow: -2px 0 var(--accent);
     clip: rect(24px, 550px, 90px, 0);
     animation: glitch-anim 3s infinite linear alternate-reverse;
   }
 
   .glitch::after {
     left: -2px;
-    text-shadow: -2px 0 var(--neon-green);
+    text-shadow: -2px 0 var(--primary);
     clip: rect(85px, 550px, 140px, 0);
     animation: glitch-anim 2s infinite linear alternate-reverse;
   }
@@ -349,9 +408,9 @@ description: INSERT COIN TO CONTINUE
     font-family: 'Press Start 2P', monospace;
     font-size: 16px;
     text-align: center;
-    color: var(--neon-yellow);
+    color: var(--primary-light);
     margin-bottom: 20px;
-    text-shadow: 0 0 10px var(--neon-yellow);
+    text-shadow: 0 0 10px var(--primary-glow);
   }
 
   /* Blink Animation */
@@ -380,10 +439,11 @@ description: INSERT COIN TO CONTINUE
   .carousel-viewport {
     flex: 1;
     overflow: hidden;
-    background: rgba(26, 26, 46, 0.5);
-    border: 2px solid var(--neon-pink);
+    background: rgba(10, 22, 40, 0.5);
+    border: 2px solid var(--accent);
+    border-radius: 6px;
     padding: 15px;
-    box-shadow: inset 0 0 20px rgba(255, 16, 240, 0.3);
+    box-shadow: inset 0 0 20px var(--accent-glow);
   }
 
   .carousel-track {
@@ -398,16 +458,17 @@ description: INSERT COIN TO CONTINUE
     height: 200px;
     cursor: pointer;
     position: relative;
-    border: 3px solid var(--neon-cyan);
-    background: var(--arcade-dark);
+    border: 2px solid var(--primary);
+    border-radius: 6px;
+    background: var(--bg-dark);
     transition: all 0.3s ease;
+    overflow: hidden;
   }
 
   .carousel-item:hover {
-    border-color: var(--neon-pink);
-    transform: scale(1.05) rotate(-2deg);
-    box-shadow: 0 0 30px var(--neon-pink);
-    animation: screen-shake 0.2s;
+    border-color: var(--accent);
+    transform: scale(1.05);
+    box-shadow: 0 0 25px var(--accent-glow);
   }
 
   .carousel-item img {
@@ -415,34 +476,29 @@ description: INSERT COIN TO CONTINUE
     height: 100%;
     object-fit: cover;
     display: block;
-    filter: brightness(0.9) contrast(1.1);
-  }
-
-  @keyframes screen-shake {
-    0%, 100% { transform: translate(0, 0) scale(1.05); }
-    25% { transform: translate(-2px, 2px) scale(1.05); }
-    75% { transform: translate(2px, -2px) scale(1.05); }
+    filter: brightness(0.95) contrast(1.05);
   }
 
   /* Arcade Buttons */
   .arcade-btn {
     width: 50px;
     height: 50px;
-    background: var(--arcade-dark);
-    border: 3px solid var(--neon-cyan);
-    color: var(--neon-cyan);
+    background: var(--bg-dark);
+    border: 2px solid var(--primary);
+    border-radius: 6px;
+    color: var(--primary);
     font-family: 'Press Start 2P', monospace;
     font-size: 20px;
     cursor: pointer;
     transition: all 0.2s;
-    box-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+    box-shadow: 0 0 10px var(--primary-glow);
     flex-shrink: 0;
   }
 
   .arcade-btn:hover {
-    background: var(--neon-cyan);
-    color: var(--arcade-black);
-    box-shadow: 0 0 20px var(--neon-cyan);
+    background: var(--primary);
+    color: white;
+    box-shadow: 0 0 20px var(--primary-glow);
     transform: scale(1.1);
   }
 
@@ -457,17 +513,19 @@ description: INSERT COIN TO CONTINUE
   }
 
   .search-container {
-    background: rgba(26, 26, 46, 0.8);
-    border: 2px solid var(--neon-green);
+    background: rgba(10, 22, 40, 0.8);
+    border: 2px solid var(--success);
+    border-radius: 6px;
     padding: 15px;
+    box-shadow: 0 0 10px var(--success-glow);
   }
 
   .search-label {
     font-family: 'Press Start 2P', monospace;
     font-size: 10px;
-    color: var(--neon-green);
+    color: var(--success);
     margin-bottom: 10px;
-    text-shadow: 0 0 5px var(--neon-green);
+    text-shadow: 0 0 5px var(--success-glow);
   }
 
   .search-input-wrapper {
@@ -478,26 +536,27 @@ description: INSERT COIN TO CONTINUE
 
   .search-input {
     flex: 1;
-    background: var(--arcade-black);
-    border: 2px solid var(--neon-cyan);
-    color: var(--neon-cyan);
+    background: var(--bg-deep);
+    border: 2px solid var(--primary);
+    border-radius: 4px;
+    color: var(--text-primary);
     font-family: 'VT323', monospace;
     font-size: 24px;
     padding: 10px 40px 10px 15px;
     text-transform: uppercase;
-    box-shadow: inset 0 0 10px rgba(0, 255, 255, 0.3);
+    box-shadow: inset 0 0 10px rgba(0, 99, 229, 0.2);
   }
 
   .search-input::placeholder {
-    color: rgba(0, 255, 255, 0.4);
+    color: rgba(249, 249, 249, 0.3);
   }
 
   .search-input:focus {
     outline: none;
-    border-color: var(--neon-pink);
+    border-color: var(--accent);
     box-shadow:
-      inset 0 0 10px rgba(255, 16, 240, 0.3),
-      0 0 15px var(--neon-pink);
+      inset 0 0 10px var(--accent-glow),
+      0 0 15px var(--accent-glow);
   }
 
   .clear-btn {
@@ -505,7 +564,7 @@ description: INSERT COIN TO CONTINUE
     right: 10px;
     background: none;
     border: none;
-    color: var(--neon-pink);
+    color: var(--accent);
     font-size: 24px;
     cursor: pointer;
     opacity: 0;
@@ -517,7 +576,7 @@ description: INSERT COIN TO CONTINUE
   }
 
   .clear-btn:hover {
-    color: var(--neon-yellow);
+    color: var(--accent-light);
   }
 
   /* Level Selection */
@@ -538,8 +597,9 @@ description: INSERT COIN TO CONTINUE
     flex-direction: column;
     align-items: center;
     gap: 5px;
-    background: var(--arcade-dark);
-    border: 2px solid var(--neon-yellow);
+    background: var(--bg-dark);
+    border: 2px solid var(--primary);
+    border-radius: 6px;
     padding: 10px 15px;
     cursor: pointer;
     transition: all 0.2s;
@@ -548,29 +608,29 @@ description: INSERT COIN TO CONTINUE
 
   .level-number {
     font-size: 12px;
-    color: var(--neon-yellow);
+    color: var(--primary-light);
   }
 
   .level-name {
     font-size: 10px;
-    color: var(--neon-cyan);
+    color: var(--text-secondary);
   }
 
   .level-btn:hover {
-    background: var(--neon-yellow);
+    background: var(--primary);
     transform: translateY(-3px);
-    box-shadow: 0 5px 0 var(--neon-pink);
+    box-shadow: 0 5px 0 var(--accent);
   }
 
   .level-btn:hover .level-number,
   .level-btn:hover .level-name {
-    color: var(--arcade-black);
+    color: white;
   }
 
   .level-btn.active {
-    background: var(--neon-pink);
-    border-color: var(--neon-pink);
-    box-shadow: 0 0 20px var(--neon-pink);
+    background: var(--accent);
+    border-color: var(--accent);
+    box-shadow: 0 0 20px var(--accent-glow);
   }
 
   .level-btn.active .level-number,
@@ -594,17 +654,18 @@ description: INSERT COIN TO CONTINUE
   .meme-card {
     position: relative;
     aspect-ratio: 1;
-    background: var(--arcade-dark);
-    border: 3px solid var(--neon-cyan);
+    background: var(--bg-dark);
+    border: 2px solid var(--primary);
+    border-radius: 8px;
     overflow: hidden;
     cursor: pointer;
     transition: all 0.3s;
   }
 
   .meme-card:hover {
-    border-color: var(--neon-pink);
+    border-color: var(--accent);
     transform: scale(1.05);
-    box-shadow: 0 0 30px var(--neon-pink);
+    box-shadow: 0 0 25px var(--accent-glow);
     z-index: 10;
   }
 
@@ -613,18 +674,18 @@ description: INSERT COIN TO CONTINUE
     height: 100%;
     object-fit: cover;
     display: block;
-    filter: brightness(0.9) contrast(1.1);
+    filter: brightness(0.95) contrast(1.05);
     transition: filter 0.3s;
   }
 
   .meme-card:hover img {
-    filter: brightness(1.1) contrast(1.2);
+    filter: brightness(1.1) contrast(1.1);
   }
 
   .meme-actions {
     position: absolute;
     inset: 0;
-    background: rgba(10, 10, 10, 0.9);
+    background: rgba(4, 7, 20, 0.85);
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -639,9 +700,10 @@ description: INSERT COIN TO CONTINUE
   }
 
   .meme-action-btn {
-    background: var(--arcade-dark);
-    border: 2px solid var(--neon-cyan);
-    color: var(--neon-cyan);
+    background: var(--bg-dark);
+    border: 2px solid var(--primary);
+    border-radius: 4px;
+    color: var(--text-primary);
     font-family: 'Press Start 2P', monospace;
     font-size: 8px;
     padding: 8px 12px;
@@ -650,9 +712,9 @@ description: INSERT COIN TO CONTINUE
   }
 
   .meme-action-btn:hover {
-    background: var(--neon-cyan);
-    color: var(--arcade-black);
-    box-shadow: 0 0 15px var(--neon-cyan);
+    background: var(--primary);
+    color: white;
+    box-shadow: 0 0 15px var(--primary-glow);
   }
 
   /* Loading State */
@@ -665,8 +727,8 @@ description: INSERT COIN TO CONTINUE
     width: 60px;
     height: 60px;
     margin: 0 auto 20px;
-    border: 4px solid var(--arcade-gray);
-    border-top: 4px solid var(--neon-pink);
+    border: 4px solid var(--bg-surface);
+    border-top: 4px solid var(--primary);
     border-radius: 50%;
     animation: spin 1s linear infinite;
   }
@@ -678,7 +740,7 @@ description: INSERT COIN TO CONTINUE
   .loading-text {
     font-family: 'Press Start 2P', monospace;
     font-size: 14px;
-    color: var(--neon-cyan);
+    color: var(--text-primary);
   }
 
   /* No Results */
@@ -694,30 +756,31 @@ description: INSERT COIN TO CONTINUE
   .no-results-title {
     font-family: 'Press Start 2P', monospace;
     font-size: 24px;
-    color: var(--neon-pink);
+    color: var(--accent);
     margin-bottom: 15px;
-    text-shadow: 0 0 20px var(--neon-pink);
+    text-shadow: 0 0 20px var(--accent-glow);
   }
 
   .no-results-subtitle {
     font-family: 'Press Start 2P', monospace;
     font-size: 16px;
-    color: var(--neon-yellow);
+    color: var(--primary-light);
     margin-bottom: 10px;
   }
 
   .no-results-hint {
     font-family: 'VT323', monospace;
     font-size: 20px;
-    color: var(--neon-cyan);
+    color: var(--text-secondary);
   }
 
   /* Footer */
   .arcade-footer {
     margin-top: 40px;
     padding: 20px;
-    background: rgba(26, 26, 46, 0.8);
-    border-top: 3px solid var(--neon-pink);
+    background: rgba(10, 22, 40, 0.8);
+    border-top: 2px solid var(--primary);
+    border-radius: 0 0 6px 6px;
   }
 
   .footer-content {
@@ -731,22 +794,22 @@ description: INSERT COIN TO CONTINUE
   .youtube-link {
     font-family: 'Press Start 2P', monospace;
     font-size: 10px;
-    color: var(--neon-yellow);
+    color: var(--accent);
     text-decoration: none;
-    text-shadow: 0 0 10px var(--neon-yellow);
+    text-shadow: 0 0 10px var(--accent-glow);
     transition: all 0.3s;
   }
 
   .youtube-link:hover {
-    color: var(--neon-pink);
-    text-shadow: 0 0 15px var(--neon-pink);
+    color: var(--accent-light);
+    text-shadow: 0 0 15px var(--accent-glow);
   }
 
   .insert-coin {
     font-family: 'Press Start 2P', monospace;
     font-size: 12px;
-    color: var(--neon-green);
-    text-shadow: 0 0 10px var(--neon-green);
+    color: var(--success);
+    text-shadow: 0 0 10px var(--success-glow);
     animation: blink 1.5s infinite;
   }
 
@@ -756,9 +819,10 @@ description: INSERT COIN TO CONTINUE
     bottom: 30px;
     left: 50%;
     transform: translateX(-50%);
-    background: var(--arcade-dark);
-    border: 3px solid var(--neon-green);
-    color: var(--neon-green);
+    background: var(--bg-dark);
+    border: 2px solid var(--success);
+    border-radius: 6px;
+    color: var(--success);
     font-family: 'Press Start 2P', monospace;
     font-size: 12px;
     padding: 15px 30px;
@@ -766,11 +830,74 @@ description: INSERT COIN TO CONTINUE
     transition: opacity 0.3s;
     pointer-events: none;
     z-index: 1000;
-    box-shadow: 0 0 30px var(--neon-green);
+    box-shadow: 0 0 20px var(--success-glow);
   }
 
   .toast.show {
     opacity: 1;
+  }
+
+  /* Arcade Lightbox */
+  .arcade-lightbox {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    background: rgba(4, 7, 20, 0.95);
+    backdrop-filter: blur(8px);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+  }
+
+  .arcade-lightbox.active {
+    display: flex;
+  }
+
+  .lightbox-close {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    font-size: 40px;
+    cursor: pointer;
+    transition: color 0.2s;
+    z-index: 10;
+    line-height: 1;
+  }
+
+  .lightbox-close:hover {
+    color: var(--accent);
+  }
+
+  .lightbox-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+    max-width: 90vw;
+    max-height: 90vh;
+  }
+
+  .lightbox-content img {
+    max-width: 100%;
+    max-height: 75vh;
+    object-fit: contain;
+    border: 2px solid var(--primary);
+    border-radius: 8px;
+    box-shadow: 0 0 40px var(--primary-glow);
+  }
+
+  .lightbox-actions {
+    display: flex;
+    gap: 15px;
+  }
+
+  .lightbox-actions .meme-action-btn {
+    font-size: 10px;
+    padding: 12px 20px;
   }
 
   /* Responsive Design */
@@ -781,7 +908,11 @@ description: INSERT COIN TO CONTINUE
     }
 
     .arcade-title {
-      font-size: 16px;
+      font-size: 12px;
+    }
+
+    .arcade-subtitle {
+      font-size: 12px;
     }
 
     .carousel-item {
@@ -822,26 +953,32 @@ description: INSERT COIN TO CONTINUE
   // All memes data structure
   const allMemes = [
     {% for image in site.static_files %}
-      {% if image.path contains '/assets/images/' and image.extname == '.png' or image.extname == '.jpg' or image.extname == '.jpeg' or image.extname == '.gif' %}
-        {
-          url: "{{ image.path | relative_url }}",
-          name: "{{ image.name }}",
-          path: "{{ image.path }}",
-          category: "{{ image.path | split: '/' | slice: 3 | first | default: 'other' }}"
-        },
+      {% if image.path contains '/assets/images/' %}
+        {% assign ext = image.extname | downcase %}
+        {% if ext == '.png' or ext == '.jpg' or ext == '.jpeg' or ext == '.gif' or ext == '.webp' %}
+          {
+            url: "{{ image.path | relative_url }}",
+            name: "{{ image.name }}",
+            path: "{{ image.path }}",
+            category: "{{ image.path | split: '/' | slice: 3 | first | default: 'other' }}"
+          },
+        {% endif %}
       {% endif %}
     {% endfor %}
   ].filter(meme => {
-    // Filter out root level images
-    return meme.category !== 'cyberpunk-dog.png' &&
-           meme.category !== 'patrick-seahorse.gif' &&
-           meme.category !== 'simpsons-dignity.png';
+    // Filter out root-level images (not in a category subfolder)
+    const rootImages = ['cyberpunk-dog.png', 'patrick-seahorse.gif'];
+    return !rootImages.includes(meme.category);
   });
 
   let currentCategory = 'all';
   let searchQuery = '';
   let carouselIndex = 0;
-  const carouselItemsPerView = window.innerWidth >= 1024 ? 5 : window.innerWidth >= 768 ? 3 : 2;
+  let carouselItemsPerView = window.innerWidth >= 1024 ? 5 : window.innerWidth >= 768 ? 3 : 2;
+
+  // Lightbox state
+  let lightboxUrl = '';
+  let lightboxName = '';
 
   // Initialize the app
   document.addEventListener('DOMContentLoaded', () => {
@@ -863,7 +1000,7 @@ description: INSERT COIN TO CONTINUE
       item.className = 'carousel-item';
       item.innerHTML = `<img src="${meme.url}" alt="${meme.name}" loading="lazy" />`;
       item.addEventListener('click', () => {
-        copyToClipboard(meme.url);
+        openArcadeLightbox(meme.url, meme.name);
       });
       track.appendChild(item);
     });
@@ -875,6 +1012,7 @@ description: INSERT COIN TO CONTINUE
   function moveCarousel(direction) {
     const track = document.getElementById('carousel-track');
     const items = track.children;
+    if (items.length === 0) return;
     const maxIndex = Math.max(0, items.length - carouselItemsPerView);
 
     carouselIndex = Math.max(0, Math.min(maxIndex, carouselIndex + direction));
@@ -885,6 +1023,7 @@ description: INSERT COIN TO CONTINUE
   function startCarouselAutoplay() {
     setInterval(() => {
       const track = document.getElementById('carousel-track');
+      if (track.children.length === 0) return;
       const maxIndex = Math.max(0, track.children.length - carouselItemsPerView);
 
       if (carouselIndex >= maxIndex) {
@@ -922,13 +1061,13 @@ description: INSERT COIN TO CONTINUE
 
     noResults.classList.add('hidden');
     gallery.innerHTML = filteredMemes.map(meme => `
-      <div class="meme-card">
+      <div class="meme-card" onclick="openArcadeLightbox('${meme.url}', '${meme.name.replace(/'/g, "\\'")}')">
         <img src="${meme.url}" alt="${meme.name}" loading="lazy" />
         <div class="meme-actions">
-          <button onclick="copyToClipboard('${meme.url}')" class="meme-action-btn">
+          <button onclick="event.stopPropagation(); copyToClipboard('${meme.url}')" class="meme-action-btn">
             COPY URL
           </button>
-          <button onclick="downloadMeme('${meme.url}', '${meme.name}')" class="meme-action-btn">
+          <button onclick="event.stopPropagation(); downloadMeme('${meme.url}', '${meme.name.replace(/'/g, "\\'")}')" class="meme-action-btn">
             DOWNLOAD
           </button>
         </div>
@@ -1046,6 +1185,39 @@ description: INSERT COIN TO CONTINUE
       });
   }
 
+  // Arcade Lightbox
+  function openArcadeLightbox(url, name) {
+    lightboxUrl = url;
+    lightboxName = name;
+    const lightbox = document.getElementById('arcade-lightbox');
+    const img = document.getElementById('arcade-lightbox-img');
+    img.src = url;
+    img.alt = name || '';
+    lightbox.classList.add('active');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeArcadeLightbox(event, force) {
+    if (force || (event && event.target === document.getElementById('arcade-lightbox'))) {
+      const lightbox = document.getElementById('arcade-lightbox');
+      lightbox.classList.remove('active');
+      document.body.style.overflow = '';
+    }
+  }
+
+  function arcadeLightboxCopy() {
+    copyToClipboard(lightboxUrl);
+  }
+
+  function arcadeLightboxDownload() {
+    downloadMeme(lightboxUrl, lightboxName);
+  }
+
+  // ESC key to close lightbox
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closeArcadeLightbox(null, true);
+  });
+
   // Show toast
   function showToast(message) {
     const toast = document.getElementById('toast');
@@ -1061,6 +1233,7 @@ description: INSERT COIN TO CONTINUE
 
   // Handle window resize
   window.addEventListener('resize', () => {
+    carouselItemsPerView = window.innerWidth >= 1024 ? 5 : window.innerWidth >= 768 ? 3 : 2;
     const track = document.getElementById('carousel-track');
     if (track.children.length > 0) {
       carouselIndex = 0;

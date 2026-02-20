@@ -36,32 +36,6 @@ img {
   perspective: 1000px;
 }
 
-/* Legacy support - minimal styling */
-.logo {
-  height: 50px;
-  transition: transform 0.2s ease-in-out;
-}
-
-.logo:hover {
-  transform: scale(1.1);
-}
-
-/* Skeleton loader for images */
-@keyframes shimmer {
-  0% {
-    background-position: -468px 0;
-  }
-  100% {
-    background-position: 468px 0;
-  }
-}
-
-.skeleton {
-  animation: shimmer 1.2s ease-in-out infinite;
-  background: linear-gradient(to right, #f0f0f0 4%, #e0e0e0 25%, #f0f0f0 36%);
-  background-size: 1000px 100%;
-}
-
 /* Smooth scrolling */
 html {
   scroll-behavior: smooth;
@@ -69,7 +43,7 @@ html {
 
 /* Focus visible for accessibility */
 *:focus-visible {
-  outline: 2px solid #157878;
+  outline: 2px solid #0063e5;
   outline-offset: 2px;
 }
 
@@ -78,6 +52,7 @@ html {
   .page-header,
   footer,
   .meme-actions,
+  .meme-overlay,
   #global-search,
   .tab-button {
     display: none !important;
