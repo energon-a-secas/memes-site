@@ -59,7 +59,7 @@
             <h2 class="text-sm md:text-base text-[#cacaca]">{{ page.description | default: site.description }}</h2>
           </div>
           <div class="flex items-center gap-3">
-            <a href="https://www.youtube.com/@EnergonHQ" target="_blank" rel="noopener noreferrer"
+            <a href="https://www.youtube.com/@energon-hq" target="_blank" rel="noopener noreferrer"
                class="flex items-center gap-2 bg-red-600 hover:bg-red-700 transition-colors px-3 py-2 rounded-lg text-white text-sm font-semibold"
                aria-label="Visit EnergonHQ YouTube Channel">
               <i class="fab fa-youtube text-lg"></i>
@@ -84,8 +84,8 @@
     <footer class="bg-[#0a1628] border-t border-[rgba(0,99,229,0.2)] text-white py-6 mt-8">
       <div class="container mx-auto px-4 text-center">
         <p class="mb-2">
-          <a href="https://www.youtube.com/@EnergonHQ" target="_blank" rel="noopener noreferrer" class="text-[#0063e5] hover:text-[#0080ff] transition-colors">
-            <i class="fab fa-youtube mr-2"></i>EnergonHQ on YouTube
+          <a href="https://www.youtube.com/@energon-hq" target="_blank" rel="noopener noreferrer" class="text-[#0063e5] hover:text-[#0080ff] transition-colors">
+            <i class="fab fa-youtube mr-2"></i>energon-hq on YouTube
           </a>
         </p>
         <p class="text-gray-500 text-sm">Meme Delivery Platform &copy; 2026</p>
@@ -97,10 +97,13 @@
     <div id="lightbox" class="fixed inset-0 z-[9999] bg-black/90 backdrop-blur-sm hidden items-center justify-center" onclick="closeLightbox(event)">
       <button onclick="closeLightbox(event, true)" class="absolute top-4 right-4 text-white/80 hover:text-white text-4xl transition-colors z-10" aria-label="Close">&times;</button>
       <div class="max-w-[90vw] max-h-[90vh] relative flex flex-col items-center" onclick="event.stopPropagation()">
-        <img id="lightbox-img" src="" alt="" class="max-w-full max-h-[80vh] object-contain rounded-lg shadow-2xl" />
-        <div class="flex justify-center gap-3 mt-4">
+        <img id="lightbox-img" src="" alt="" crossorigin="anonymous" class="max-w-full max-h-[80vh] object-contain rounded-lg shadow-2xl transition-transform duration-300 hover:scale-[1.03]" />
+        <div class="flex justify-center gap-3 mt-4 flex-wrap">
           <button onclick="lightboxCopy()" class="bg-[#0063e5] hover:bg-[#0080ff] text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors flex items-center gap-2">
             <i class="fas fa-link"></i> Copy URL
+          </button>
+          <button onclick="lightboxCopyImage()" class="bg-[#7c3aed] hover:bg-[#6d28d9] text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors flex items-center gap-2">
+            <i class="fas fa-image"></i> Copy Image
           </button>
           <button onclick="lightboxDownload()" class="bg-[#ff8c00] hover:bg-orange-500 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors flex items-center gap-2">
             <i class="fas fa-download"></i> Download
@@ -154,6 +157,25 @@
           document.body.removeChild(temp);
           showLayoutToast('URL copied to clipboard!');
         });
+      }
+
+      function lightboxCopyImage() {
+        const img = document.getElementById('lightbox-img');
+        const canvas = document.createElement('canvas');
+        canvas.width = img.naturalWidth;
+        canvas.height = img.naturalHeight;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0);
+        canvas.toBlob(blob => {
+          if (!blob) { showLayoutToast('Could not copy image'); return; }
+          navigator.clipboard.write([
+            new ClipboardItem({ 'image/png': blob })
+          ]).then(() => {
+            showLayoutToast('Image copied to clipboard!');
+          }).catch(() => {
+            showLayoutToast('Browser does not support image copy');
+          });
+        }, 'image/png');
       }
 
       function lightboxDownload() {

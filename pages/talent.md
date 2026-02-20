@@ -64,8 +64,8 @@ description: Self-Deprecating Work Humor
   }
   .meme-card:hover {
     border-color: #ff8c00;
-    box-shadow: 0 0 20px rgba(255, 140, 0, 0.3);
-    transform: scale(1.02);
+    box-shadow: 0 0 30px rgba(255, 140, 0, 0.4), 0 8px 25px rgba(0, 0, 0, 0.4);
+    transform: scale(1.1);
   }
   .meme-card img {
     width: 100%;

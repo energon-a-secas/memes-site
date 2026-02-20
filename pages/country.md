@@ -45,7 +45,7 @@ description: Regional humor from around the world
 
 <style>
   .meme-card { position: relative; overflow: hidden; border-radius: 0.5rem; border: 2px solid rgba(0, 99, 229, 0.3); background: #0a1628; cursor: pointer; transition: all 0.3s; }
-  .meme-card:hover { border-color: #ff8c00; box-shadow: 0 0 20px rgba(255, 140, 0, 0.3); transform: scale(1.02); }
+  .meme-card:hover { border-color: #ff8c00; box-shadow: 0 0 30px rgba(255, 140, 0, 0.4), 0 8px 25px rgba(0, 0, 0, 0.4); transform: scale(1.1); }
   .meme-card img { width: 100%; aspect-ratio: 1; object-fit: cover; display: block; }
   .meme-overlay { position: absolute; inset: 0; background: rgba(4, 7, 20, 0.8); opacity: 0; transition: opacity 0.3s; display: flex; align-items: center; justify-content: center; gap: 0.75rem; }
   .meme-card:hover .meme-overlay { opacity: 1; }

@@ -154,7 +154,7 @@ standalone: true
   <!-- Arcade Footer -->
   <footer class="arcade-footer">
     <div class="footer-content">
-      <a href="https://www.youtube.com/@EnergonHQ" target="_blank" rel="noopener noreferrer" class="youtube-link">
+      <a href="https://www.youtube.com/@energon-hq" target="_blank" rel="noopener noreferrer" class="youtube-link">
         <span class="blink">&#9658;</span> MORE MEMES ON YOUTUBE <span class="blink">&#9668;</span>
       </a>
       <div class="insert-coin">INSERT COIN</div>
@@ -171,9 +171,10 @@ standalone: true
 <div id="arcade-lightbox" class="arcade-lightbox" onclick="closeArcadeLightbox(event)">
   <button class="lightbox-close" onclick="closeArcadeLightbox(event, true)" aria-label="Close">&times;</button>
   <div class="lightbox-content" onclick="event.stopPropagation()">
-    <img id="arcade-lightbox-img" src="" alt="" />
+    <img id="arcade-lightbox-img" src="" alt="" crossorigin="anonymous" />
     <div class="lightbox-actions">
       <button onclick="arcadeLightboxCopy()" class="meme-action-btn">COPY URL</button>
+      <button onclick="arcadeLightboxCopyImage()" class="meme-action-btn copy-img-btn">COPY IMAGE</button>
       <button onclick="arcadeLightboxDownload()" class="meme-action-btn">DOWNLOAD</button>
     </div>
   </div>
@@ -467,8 +468,8 @@ standalone: true
 
   .carousel-item:hover {
     border-color: var(--accent);
-    transform: scale(1.05);
-    box-shadow: 0 0 25px var(--accent-glow);
+    transform: scale(1.12) rotate(-1deg);
+    box-shadow: 0 0 30px var(--accent-glow), 0 8px 25px rgba(0, 0, 0, 0.4);
   }
 
   .carousel-item img {
@@ -664,8 +665,8 @@ standalone: true
 
   .meme-card:hover {
     border-color: var(--accent);
-    transform: scale(1.05);
-    box-shadow: 0 0 25px var(--accent-glow);
+    transform: scale(1.12);
+    box-shadow: 0 0 30px var(--accent-glow), 0 8px 25px rgba(0, 0, 0, 0.4);
     z-index: 10;
   }
 
@@ -888,6 +889,20 @@ standalone: true
     border: 2px solid var(--primary);
     border-radius: 8px;
     box-shadow: 0 0 40px var(--primary-glow);
+    transition: transform 0.3s ease;
+  }
+
+  .lightbox-content img:hover {
+    transform: scale(1.03);
+  }
+
+  .copy-img-btn {
+    border-color: #7c3aed !important;
+  }
+
+  .copy-img-btn:hover {
+    background: #7c3aed !important;
+    box-shadow: 0 0 15px rgba(124, 58, 237, 0.4) !important;
   }
 
   .lightbox-actions {
@@ -1207,6 +1222,25 @@ standalone: true
 
   function arcadeLightboxCopy() {
     copyToClipboard(lightboxUrl);
+  }
+
+  function arcadeLightboxCopyImage() {
+    const img = document.getElementById('arcade-lightbox-img');
+    const canvas = document.createElement('canvas');
+    canvas.width = img.naturalWidth;
+    canvas.height = img.naturalHeight;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(img, 0, 0);
+    canvas.toBlob(blob => {
+      if (!blob) { showToast('ERROR!'); return; }
+      navigator.clipboard.write([
+        new ClipboardItem({ 'image/png': blob })
+      ]).then(() => {
+        showToast('IMAGE COPIED!');
+      }).catch(() => {
+        showToast('NOT SUPPORTED!');
+      });
+    }, 'image/png');
   }
 
   function arcadeLightboxDownload() {
