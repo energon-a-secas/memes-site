@@ -1,7 +1,7 @@
 title: Meme Delivery Platform
 description: Your go-to library for work memes, Simpsons, anime, movie references, and meme templates. Browse, copy, and share instantly.
-url: https://lucianoadonis.github.io
-baseurl: /talent
+url: https://talentmemes.lucianoadonis.com
+baseurl: ""
 theme: jekyll-theme-cayman # https://pages.github.com/themes/
 
 # SEO Settings
