@@ -7,15 +7,10 @@ import { loadConvexMemes, loadVotes } from './events.js';
 
 // events.js self-registers all DOM listeners on import.
 
-// Load Convex data first (skip per-call renders), then do a single render.
-async function init() {
-  await Promise.allSettled([
-    loadConvexMemes({ render: false }),
-    loadVotes({ render: false }),
-  ]);
-  rebuildChips();
-  filterGrid();
-  renderRecentlyAdded();
-}
+// Render immediately with hardcoded memes, then enrich with Convex data.
+rebuildChips();
+filterGrid();
 
-init();
+// Load Convex data in the background — re-renders when ready.
+loadConvexMemes();
+loadVotes();
