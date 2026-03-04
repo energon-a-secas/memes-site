@@ -1,22 +1,28 @@
-# Jekyll
-_site/
-.sass-cache/
-.jekyll-cache/
-.jekyll-metadata
+# ── macOS ─────────────────────────────────────────────────────────────────────
+.DS_Store
+.tool-versions
 
-# Bundler
+# ── Playwright MCP (Claude Code browser automation — screenshots, logs) ───────
+.playwright-mcp/
+
+# ── Node (local tooling only — these projects have no npm dependencies) ───────
+node_modules/
+npm-debug.log*
+
+# ── Convex generated files (auto-created by `npx convex dev`) ────────────────
+convex/_generated/
+
+# ── Dev notes ─────────────────────────────────────────────────────────────────
+example.txt
+
+# ── Secrets — never commit ────────────────────────────────────────────────────
+.env
+.env.*
+
+# ── Jekyll artifacts (legacy) ─────────────────────────────────────────────────
+_site/
+.jekyll-cache/
+.sass-cache/
+.jekyll-metadata
 vendor/
 .bundle/
-Gemfile.lock
-
-# macOS
-.DS_Store
-
-# IDE
-.vscode/
-.idea/
-
-# Temp files
-*.swp
-*.swo
-*~

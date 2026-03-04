@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Meme Vault | Neorgon</title>
+  <meta name="description" content="Browse, search, and download memes organized by category — from Simpsons classics to anime references">
+  <meta name="theme-color" content="#040714">
+  <link rel="icon" type="image/x-icon" href="favicon.ico" />
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <a class="skip-link" href="#main">Skip to content</a>
+
+  <header class="header-bar">
+    <a class="header-logo" href="https://talentmemes.lucianoadonis.com/">
+      <img src="energon-classic-logo.png" class="header-logo-img" alt="Neorgon">
+      <div>
+        <h1>Meme Vault</h1>
+        <div class="header-subtitle" id="subtitle">67 internal jokes</div>
+      </div>
+    </a>
+    <nav>
+      <button class="nav-link nav-link--random" id="randomBtn" title="Random meme">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;margin-right:4px"><polyline points="16 3 21 3 21 8"/><line x1="4" y1="20" x2="21" y2="3"/><polyline points="21 16 21 21 16 21"/><line x1="15" y1="15" x2="21" y2="21"/><line x1="4" y1="4" x2="9" y2="9"/></svg>
+        Random
+      </button>
+      <button class="nav-link" id="uploadToggle" style="color:var(--accent);border-color:rgba(0,99,229,.2)">Upload</button>
+      <a class="header-home" href="https://neorgon.com/" title="neorgon.com" target="_blank" rel="noopener noreferrer" aria-label="Neorgon home">
+        <svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+          <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/>
+        </svg>
+      </a>
+    </nav>
+  </header>
+
+  <main class="container" id="main">
+
+    <!-- Upload panel -->
+    <div class="upload-panel" id="uploadPanel">
+      <h3>Upload Meme</h3>
+      <!-- Auth gate: login/register -->
+      <div id="authGate">
+        <div class="auth-tabs">
+          <button class="auth-tab active" id="tabLogin">Log In</button>
+          <button class="auth-tab" id="tabRegister">Register</button>
+        </div>
+        <div class="auth-form" id="loginForm">
+          <input type="text" id="loginUser" placeholder="Username" autocomplete="username">
+          <input type="password" id="loginPass" placeholder="Password" autocomplete="current-password">
+          <button class="upload-submit-btn" id="loginSubmit">Log In</button>
+        </div>
+        <div class="auth-form" id="registerForm" style="display:none">
+          <input type="text" id="regUser" placeholder="Choose a username" autocomplete="username">
+          <input type="password" id="regPass" placeholder="Choose a password" autocomplete="new-password">
+          <button class="upload-submit-btn" id="regSubmit">Register</button>
+        </div>
+      </div>
+      <!-- Logged-in header -->
+      <div id="authHeader" style="display:none">
+        <div class="auth-user-row">
+          <span class="auth-username" id="authUsername"></span>
+          <button class="auth-logout" id="logoutBtn">Log out</button>
+        </div>
+      </div>
+      <!-- Upload zone (hidden until logged in) -->
+      <div id="uploadZone" style="display:none">
+        <div class="drop-zone" id="dropZone">Drop an image here, or click to browse</div>
+        <input type="file" id="fileInput" accept="image/png,image/jpeg,image/gif,image/webp" style="display:none">
+        <div id="uploadPreview" style="display:none">
+          <div class="upload-preview">
+            <img id="previewImg" src="" alt="preview">
+            <div class="upload-fields">
+              <input type="text" id="memeNameInput" placeholder="Meme name">
+              <select id="memeCatSelect">
+                <option value="general">general</option>
+                <option value="anime">anime</option>
+                <option value="country">country</option>
+                <option value="games">games</option>
+                <option value="mood">mood</option>
+                <option value="movie-reference">movie-reference</option>
+                <option value="other-references">other-references</option>
+                <option value="series">series</option>
+                <option value="simpsons">simpsons</option>
+                <option value="talent">talent</option>
+                <option value="templates">templates</option>
+              </select>
+              <label class="anon-label">
+                <input type="checkbox" id="anonCheck" checked> Post anonymously
+              </label>
+            </div>
+          </div>
+          <button class="upload-submit-btn" id="uploadSubmit">Upload Meme</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="search-wrap">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+      </svg>
+      <input id="searchInput" type="text" placeholder="Search 67 internal jokes..." autocomplete="off" spellcheck="false">
+    </div>
+
+    <!-- Recently added (Convex uploads) -->
+    <div class="recent-section" id="recentSection" style="display:none">
+      <h2 class="section-heading">Recently Added</h2>
+      <div class="recent-row" id="recentRow"></div>
+    </div>
+
+    <div class="chips" id="chips"></div>
+
+    <div class="toolbar-row">
+      <div class="result-info" id="resultInfo"></div>
+      <div class="sort-controls">
+        <label class="sort-label" for="sortSelect">Sort:</label>
+        <select id="sortSelect" class="sort-select">
+          <option value="default">Default</option>
+          <option value="votes">Most Voted</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="meme-grid" id="memeGrid"></div>
+
+  </main>
+
+  <!-- Lightbox -->
+  <div class="lightbox" id="lightbox">
+    <button class="lightbox-close" id="lightboxClose" aria-label="Close">&times;</button>
+    <button class="lightbox-nav lightbox-prev" id="lbPrev" aria-label="Previous">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+    </button>
+    <button class="lightbox-nav lightbox-next" id="lbNext" aria-label="Next">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+    </button>
+    <div class="lightbox-content">
+      <img id="lightboxImg" src="" alt="">
+      <div class="lightbox-info">
+        <div class="lightbox-name" id="lightboxName"></div>
+        <div class="lightbox-counter" id="lightboxCounter"></div>
+        <div class="lightbox-actions">
+          <button class="lightbox-btn" id="lbCopyUrl" title="Copy URL">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>
+            <span>Copy URL</span>
+          </button>
+          <button class="lightbox-btn" id="lbCopyImg" title="Copy Image">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+            <span>Copy Image</span>
+          </button>
+          <button class="lightbox-btn" id="lbDownload" title="Download">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            <span>Download</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer class="info-footer">
+    Meme Vault &middot;
+    <a href="https://neorgon.com/">neorgon.com</a>
+  </footer>
+
+  <div id="toast"></div>
+
+  <button class="scroll-top" id="scrollTop" aria-label="Scroll to top">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
+  </button>
+
+  <script type="module" src="js/app.js"></script>
+
+</body>
+</html>
