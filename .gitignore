@@ -19,6 +19,10 @@ example.txt
 .env
 .env.*
 
+# ── Prevent deployment of dev files ──────────────────────────────────────────
+package.json
+.claudeignore
+
 # ── Jekyll artifacts (legacy) ─────────────────────────────────────────────────
 _site/
 .jekyll-cache/

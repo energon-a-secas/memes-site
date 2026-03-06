@@ -1,7 +1,0 @@
-{
-  "name": "memes-site",
-  "private": true,
-  "dependencies": {
-    "convex": "^1.21.0"
-  }
-}
