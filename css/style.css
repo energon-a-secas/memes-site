@@ -420,6 +420,8 @@ nav { display: flex; align-items: center; gap: 6px; margin-left: auto; }
   transform: scale(1.1);
 }
 .overlay-btn svg { width: 18px; height: 18px; display: block; }
+.overlay-btn--delete { color: #f87171; }
+.overlay-btn--delete:hover { background: rgba(239,68,68,.24); color: #fca5a5; }
 
 /* ── Empty state ─────────────────────────────────────────────────── */
 .empty-state {
@@ -600,45 +602,133 @@ nav { display: flex; align-items: center; gap: 6px; margin-left: auto; }
   color: var(--text-secondary);
 }
 
-/* ── Auth tabs & form ─────────────────────────────────────────────── */
+/* ── Auth toggle (header button) ──────────────────────────────────── */
+.auth-toggle {
+  background: none; border: none; cursor: pointer;
+  color: rgba(255,255,255,.8);
+  display: flex; align-items: center;
+  padding: 5px;
+  border-radius: var(--radius-sm);
+  transition: color var(--dur), background var(--dur);
+}
+.auth-toggle svg { width: 34px; height: 34px; display: block; }
+.auth-toggle:hover { color: #fff; background: rgba(255,255,255,.12); }
+.auth-toggle.logged-in { color: var(--accent); }
+
+/* ── Auth panel (collapsible, below header) ──────────────────────── */
+.auth-panel {
+  max-height: 0;
+  overflow: hidden;
+  background:
+    radial-gradient(1px 1px at 10% 20%, rgba(255,255,255,.45), transparent),
+    radial-gradient(1px 1px at 30% 70%, rgba(255,255,255,.3), transparent),
+    radial-gradient(1px 1px at 55% 15%, rgba(255,255,255,.5), transparent),
+    radial-gradient(1px 1px at 70% 55%, rgba(255,255,255,.25), transparent),
+    radial-gradient(1px 1px at 85% 35%, rgba(255,255,255,.4), transparent),
+    radial-gradient(1px 1px at 15% 85%, rgba(255,255,255,.35), transparent),
+    radial-gradient(1px 1px at 45% 45%, rgba(255,255,255,.2), transparent),
+    radial-gradient(1px 1px at 92% 80%, rgba(255,255,255,.3), transparent),
+    radial-gradient(1.5px 1.5px at 25% 40%, rgba(200,180,255,.4), transparent),
+    radial-gradient(1.5px 1.5px at 78% 18%, rgba(180,200,255,.35), transparent),
+    linear-gradient(180deg, #000912 0%, #040714 100%);
+  transition: max-height 0.3s ease, padding 0.3s ease;
+  padding: 0 var(--space-6);
+}
+.auth-panel.open {
+  max-height: 160px;
+  padding: var(--space-4) var(--space-6);
+}
+.auth-panel-inner {
+  max-width: 480px;
+  margin: 0 auto;
+}
+
+/* ── Auth divider (animated gradient bar below auth panel) ────────── */
+.auth-divider {
+  height: 0;
+  background: linear-gradient(90deg, transparent 0%, #3D0080 25%, #B015B0 50%, #3D0080 75%, transparent 100%);
+  background-size: 200% 100%;
+  transition: height 0.3s ease;
+}
+.auth-panel.open + .auth-divider {
+  height: 3px;
+  animation: dividerShimmer 3s ease-in-out infinite;
+}
+@keyframes dividerShimmer {
+  0%, 100% { background-position: 0% 0; }
+  50% { background-position: -100% 0; }
+}
+
+/* ── Auth tabs ───────────────────────────────────────────────────── */
 .auth-tabs {
-  display: flex; gap: 4px; margin-bottom: 14px;
+  display: flex; gap: 4px; margin-bottom: var(--space-3);
 }
 .auth-tab {
-  flex: 1; padding: 8px; text-align: center;
-  background: none; border: 1px solid var(--border); border-radius: var(--radius-sm);
-  color: var(--text-muted); font: inherit; font-size: .82rem; font-weight: 500;
+  flex: 1; padding: 7px; text-align: center;
+  background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.18); border-radius: var(--radius-sm);
+  color: rgba(255,255,255,.7); font: inherit; font-size: var(--text-sm); font-weight: 500;
   cursor: pointer; transition: color .15s, border-color .15s, background .15s;
 }
-.auth-tab:hover { color: var(--text-primary); border-color: rgba(0,99,229,.25); }
+.auth-tab:hover { color: var(--text-primary); border-color: rgba(255,255,255,.3); }
 .auth-tab.active { color: var(--accent); border-color: var(--accent); background: var(--accent-dim); }
+
+/* ── Auth form ───────────────────────────────────────────────────── */
+.auth-panel [hidden] { display: none !important; }
 .auth-form {
-  display: flex; flex-direction: column; gap: 8px;
+  display: flex; gap: var(--space-2); align-items: center;
 }
 .auth-form input {
-  background: rgba(255,255,255,.05);
+  flex: 1; min-width: 120px;
+  background: var(--surface-1);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
-  padding: 9px 14px;
-  font: inherit; font-size: .88rem;
+  padding: 8px 12px;
+  font: inherit; font-size: var(--text-sm);
   color: var(--text-primary);
   outline: none;
   transition: border-color .2s;
 }
+.auth-form input::placeholder { color: var(--text-muted); }
 .auth-form input:focus { border-color: rgba(0,99,229,.4); }
-.auth-user-row {
-  display: flex; align-items: center; justify-content: space-between;
-  margin-bottom: 14px;
+
+.auth-submit {
+  padding: 8px 18px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--accent);
+  background: var(--accent);
+  color: #fff;
+  font: inherit; font-size: var(--text-sm); font-weight: 600;
+  cursor: pointer;
+  transition: opacity .15s;
+  white-space: nowrap;
+}
+.auth-submit:hover { opacity: .85; }
+
+/* ── Auth user (logged-in state) ─────────────────────────────────── */
+#authUser {
+  display: flex; align-items: center; gap: var(--space-3);
 }
 .auth-username {
-  font-size: .85rem; font-weight: 500; color: var(--accent);
+  font-size: var(--text-sm); font-weight: 600; color: var(--accent);
+}
+.auth-role {
+  font-size: .7rem; font-weight: 700;
+  padding: 2px 8px; border-radius: 4px;
+  background: rgba(168,85,247,.15); color: #c084fc;
+  text-transform: uppercase; letter-spacing: .5px;
 }
 .auth-logout {
   background: none; border: 1px solid var(--border); border-radius: var(--radius-sm);
-  padding: 4px 12px; font: inherit; font-size: .75rem; color: var(--text-muted);
+  padding: 5px 12px; font: inherit; font-size: .75rem; color: var(--text-muted);
   cursor: pointer; transition: color .15s, border-color .15s;
 }
 .auth-logout:hover { color: var(--text-primary); border-color: var(--border-strong); }
+
+/* ── Upload login prompt ─────────────────────────────────────────── */
+.upload-login-msg {
+  font-size: var(--text-sm); color: var(--text-muted);
+}
+
 .anon-label {
   display: flex; align-items: center; gap: 6px;
   font-size: .78rem; color: var(--text-muted); cursor: pointer;
@@ -818,4 +908,7 @@ button:active, .btn:active {
   .lightbox-prev { left: 8px; }
   .lightbox-next { right: 8px; }
   .nav-link--random span { display: none; }
+  .auth-panel.open { max-height: 220px; }
+  .auth-form { flex-direction: column; }
+  .auth-form input { width: 100%; }
 }

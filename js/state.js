@@ -8,8 +8,8 @@ export const convex = new ConvexHttpClient(CONVEX_URL);
 
 // Function references (strings at runtime — no build step needed)
 export const api = {
-  memes: { list: "memes:list", getUploadUrl: "memes:getUploadUrl", saveMeme: "memes:saveMeme" },
-  auth:  { register: "auth:register", login: "auth:login" },
+  memes: { list: "memes:list", getUploadUrl: "memes:getUploadUrl", saveMeme: "memes:saveMeme", deleteMeme: "memes:deleteMeme" },
+  auth:  { register: "auth:register", login: "auth:login", getRole: "auth:getRole", setRole: "auth:setRole" },
   votes: { getVotes: "votes:getVotes", toggleVote: "votes:toggleVote" },
 };
 
@@ -32,6 +32,13 @@ export function setLoggedInUser(username) {
   if (username) localStorage.setItem('meme-vault-user', username);
   else localStorage.removeItem('meme-vault-user');
 }
+export function getUserRole() {
+  return localStorage.getItem('meme-vault-role') || 'user';
+}
+export function setUserRole(role) {
+  if (role && role !== 'user') localStorage.setItem('meme-vault-role', role);
+  else localStorage.removeItem('meme-vault-role');
+}
 
 // ── Mutable application state ────────────────────────────────────────
 export const state = {
@@ -49,6 +56,7 @@ export const state = {
 /** Merge hardcoded MEMES with dynamically loaded Convex memes. */
 export function getAllMemes() {
   const mapped = state.convexMemes.map((m, i) => ({
+    _id: m._id,
     name: m.name,
     category: m.category,
     path: m.url,

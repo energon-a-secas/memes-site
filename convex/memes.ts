@@ -28,6 +28,25 @@ export const getUploadUrl = mutation({
   },
 });
 
+/** Admin-only: delete a meme by its Convex _id. */
+export const deleteMeme = mutation({
+  args: { memeId: v.id("memes"), adminUsername: v.string() },
+  handler: async (ctx, args) => {
+    const admin = await ctx.db
+      .query("users")
+      .withIndex("by_username", (q) => q.eq("username", args.adminUsername.trim().toLowerCase()))
+      .first();
+    if (!admin || admin.role !== "admin") {
+      return { ok: false, error: "Not authorized" };
+    }
+    const meme = await ctx.db.get(args.memeId);
+    if (!meme) return { ok: false, error: "Meme not found" };
+    await ctx.storage.delete(meme.storageId);
+    await ctx.db.delete(args.memeId);
+    return { ok: true };
+  },
+});
+
 export const saveMeme = mutation({
   args: {
     name: v.string(),

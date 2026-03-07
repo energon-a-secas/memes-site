@@ -1,8 +1,8 @@
 // ── DOM rendering ────────────────────────────────────────────────────
 import { CATEGORIES } from './data.js';
-import { state, getAllMemes } from './state.js';
+import { state, getAllMemes, getUserRole } from './state.js';
 import { formatName, copyMemeImage, downloadMeme } from './utils.js';
-import { openLightbox, handleVoteClick } from './events.js';
+import { openLightbox, handleVoteClick, handleDeleteMeme } from './events.js';
 
 // ── SVG icon templates ───────────────────────────────────────────────
 const COPY_SVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>`;
@@ -12,6 +12,7 @@ const HEART_SVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" st
 const HEART_FILLED_SVG = `<svg viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>`;
 const THUMBDOWN_SVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 15v4a3 3 0 003 3l4-9V2H5.72a2 2 0 00-2 1.7l-1.38 9a2 2 0 002 2.3zm7-13h2.67A2.31 2.31 0 0122 4v7a2.31 2.31 0 01-2.33 2H17"/></svg>`;
 const THUMBDOWN_FILLED_SVG = `<svg viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 15v4a3 3 0 003 3l4-9V2H5.72a2 2 0 00-2 1.7l-1.38 9a2 2 0 002 2.3zm7-13h2.67A2.31 2.31 0 0122 4v7a2.31 2.31 0 01-2.33 2H17"/></svg>`;
+const TRASH_SVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>`;
 
 // ── Cached DOM references ────────────────────────────────────────────
 const grid        = document.getElementById('memeGrid');
@@ -121,6 +122,16 @@ export function makeCard(m) {
   overlay.appendChild(viewBtn);
   overlay.appendChild(copyBtn);
   overlay.appendChild(dlBtn);
+
+  // Admin: delete button for Convex-uploaded memes
+  if (getUserRole() === 'admin' && m._id) {
+    const delBtn = document.createElement('button');
+    delBtn.className = 'overlay-btn overlay-btn--delete';
+    delBtn.title = 'Delete (admin)';
+    delBtn.innerHTML = TRASH_SVG;
+    delBtn.addEventListener('click', (e) => { e.stopPropagation(); handleDeleteMeme(m._id, m.name); });
+    overlay.appendChild(delBtn);
+  }
 
   // Wrap image + overlay together so overlay only covers the image
   const imgWrap = document.createElement('div');

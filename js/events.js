@@ -1,6 +1,6 @@
 // ── Event handlers ───────────────────────────────────────────────────
 import { MEMES } from './data.js';
-import { state, convex, api, visitorId, getAllMemes, getLoggedInUser, setLoggedInUser } from './state.js';
+import { state, convex, api, visitorId, getAllMemes, getLoggedInUser, setLoggedInUser, getUserRole, setUserRole } from './state.js';
 import { showToast, formatName, copyMemeUrl, copyMemeImage, downloadMeme } from './utils.js';
 import { rebuildChips, filterGrid, renderRecentlyAdded } from './render.js';
 
@@ -85,6 +85,24 @@ export async function handleVoteClick(memeKey, direction = 1) {
   }
 }
 
+// ── Admin: delete meme ──────────────────────────────────────────────
+export async function handleDeleteMeme(memeId, memeName) {
+  if (!confirm(`Delete "${memeName}"?`)) return;
+  const username = getLoggedInUser();
+  if (!username) { showToast('Login required'); return; }
+  try {
+    const result = await convex.mutation(api.memes.deleteMeme, { memeId, adminUsername: username });
+    if (result.ok) {
+      showToast('Meme deleted');
+      await loadConvexMemes();
+    } else {
+      showToast(result.error);
+    }
+  } catch (e) {
+    showToast('Delete failed: ' + e.message);
+  }
+}
+
 // ── Upload panel toggle ──────────────────────────────────────────────
 const uploadToggle = document.getElementById('uploadToggle');
 const uploadPanel  = document.getElementById('uploadPanel');
@@ -92,93 +110,100 @@ uploadToggle.addEventListener('click', () => {
   uploadPanel.classList.toggle('open');
 });
 
-// ── Auth: Login / Register ───────────────────────────────────────────
-const authGate    = document.getElementById('authGate');
-const authHeader  = document.getElementById('authHeader');
-const uploadZone  = document.getElementById('uploadZone');
+// ── Auth panel (standardized) ────────────────────────────────────────
+const authToggle     = document.getElementById('authToggle');
+const authPanel      = document.getElementById('authPanel');
+const authGate       = document.getElementById('authGate');
+const authUserEl     = document.getElementById('authUser');
 const authUsernameEl = document.getElementById('authUsername');
+const authRoleEl     = document.getElementById('authRole');
+const uploadZone     = document.getElementById('uploadZone');
+const uploadLoginPrompt = document.getElementById('uploadLoginPrompt');
 
-const tabLogin    = document.getElementById('tabLogin');
-const tabRegister = document.getElementById('tabRegister');
-const loginForm   = document.getElementById('loginForm');
-const registerForm = document.getElementById('registerForm');
-
-tabLogin.addEventListener('click', () => {
-  tabLogin.classList.add('active'); tabRegister.classList.remove('active');
-  loginForm.style.display = 'flex'; registerForm.style.display = 'none';
-});
-tabRegister.addEventListener('click', () => {
-  tabRegister.classList.add('active'); tabLogin.classList.remove('active');
-  registerForm.style.display = 'flex'; loginForm.style.display = 'none';
+// Toggle auth panel
+authToggle.addEventListener('click', () => {
+  authPanel.classList.toggle('open');
 });
 
-function showLoggedIn(username) {
-  authGate.style.display = 'none';
-  authHeader.style.display = 'block';
-  uploadZone.style.display = 'block';
-  authUsernameEl.textContent = username;
+// Tab switching
+document.querySelectorAll('.auth-tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    const isLogin = tab.dataset.tab === 'login';
+    document.getElementById('authLoginForm').hidden = !isLogin;
+    document.getElementById('authRegisterForm').hidden = isLogin;
+  });
+});
+
+/** Update UI after login/logout. */
+function renderAuthState(username, role) {
+  const loggedIn = !!username;
+  authGate.hidden = loggedIn;
+  authUserEl.hidden = !loggedIn;
+  authToggle.classList.toggle('logged-in', loggedIn);
+  if (loggedIn) {
+    authUsernameEl.textContent = username;
+    authRoleEl.hidden = role !== 'admin';
+  }
+  // Upload panel: show/hide zone vs login prompt
+  if (uploadZone) uploadZone.style.display = loggedIn ? 'block' : 'none';
+  if (uploadLoginPrompt) uploadLoginPrompt.style.display = loggedIn ? 'none' : 'block';
 }
 
 // Restore session
 const savedUser = getLoggedInUser();
-if (savedUser) showLoggedIn(savedUser);
+if (savedUser) renderAuthState(savedUser, getUserRole());
 
-// Login
-document.getElementById('loginSubmit').addEventListener('click', async () => {
-  const user = document.getElementById('loginUser').value.trim();
-  const pass = document.getElementById('loginPass').value;
-  if (!user || !pass) return;
+/** Handle login or register. */
+async function handleAuth(action) {
+  const isLogin = action === 'login';
+  const userEl = document.getElementById(isLogin ? 'authLoginUser' : 'authRegUser');
+  const passEl = document.getElementById(isLogin ? 'authLoginPass' : 'authRegPass');
+  const username = userEl.value.trim();
+  const password = passEl.value;
+  if (!username || !password) { showToast('Enter username and password'); return; }
+
   try {
-    const result = await convex.mutation(api.auth.login, { username: user, password: pass });
+    const fn = isLogin ? api.auth.login : api.auth.register;
+    const result = await convex.mutation(fn, { username, password });
     if (result.ok) {
+      const role = result.role || 'user';
       setLoggedInUser(result.username);
-      showLoggedIn(result.username);
-      showToast(`Welcome back, ${result.username}`);
+      setUserRole(role);
+      renderAuthState(result.username, role);
+      showToast(isLogin ? `Welcome back, ${result.username}` : `Welcome, ${result.username}!`);
+      userEl.value = '';
+      passEl.value = '';
     } else {
       showToast(result.error);
     }
   } catch {
-    showToast('Login failed. Check Convex config');
+    showToast(`${isLogin ? 'Login' : 'Registration'} failed. Check Convex config`);
   }
-});
+}
 
-// Register
-document.getElementById('regSubmit').addEventListener('click', async () => {
-  const user = document.getElementById('regUser').value.trim();
-  const pass = document.getElementById('regPass').value;
-  if (!user || !pass) return;
-  try {
-    const result = await convex.mutation(api.auth.register, { username: user, password: pass });
-    if (result.ok) {
-      setLoggedInUser(result.username);
-      showLoggedIn(result.username);
-      showToast(`Welcome, ${result.username}!`);
-    } else {
-      showToast(result.error);
-    }
-  } catch {
-    showToast('Registration failed. Check Convex config');
-  }
-});
+// Auth buttons
+document.getElementById('authLoginBtn').addEventListener('click', () => handleAuth('login'));
+document.getElementById('authRegBtn').addEventListener('click', () => handleAuth('register'));
 
 // Enter key on auth forms
-['loginUser', 'loginPass'].forEach(id => {
+['authLoginUser', 'authLoginPass'].forEach(id => {
   document.getElementById(id).addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') document.getElementById('loginSubmit').click();
+    if (e.key === 'Enter') handleAuth('login');
   });
 });
-['regUser', 'regPass'].forEach(id => {
+['authRegUser', 'authRegPass'].forEach(id => {
   document.getElementById(id).addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') document.getElementById('regSubmit').click();
+    if (e.key === 'Enter') handleAuth('register');
   });
 });
 
 // Logout
-document.getElementById('logoutBtn').addEventListener('click', () => {
+document.getElementById('authLogout').addEventListener('click', () => {
   setLoggedInUser(null);
-  authGate.style.display = 'block';
-  authHeader.style.display = 'none';
-  uploadZone.style.display = 'none';
+  setUserRole(null);
+  renderAuthState(null);
   showToast('Logged out');
 });
 

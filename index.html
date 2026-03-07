@@ -57,7 +57,12 @@
         Random
       </button>
       <button class="nav-link" id="uploadToggle" style="color:var(--accent);border-color:rgba(0,99,229,.2)">Upload</button>
-      <a class="header-home" href="https://neorgon.com/" title="neorgon.com" aria-label="Neorgon home">
+      <button class="auth-toggle" id="authToggle" aria-label="Account">
+        <svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+          <path d="M7.5 6.5C7.5 8.981 9.519 11 12 11s4.5-2.019 4.5-4.5S14.481 2 12 2 7.5 4.019 7.5 6.5zM20 21h1v-1c0-3.859-3.141-7-7-7h-4c-3.86 0-7 3.141-7 7v1h17z"/>
+        </svg>
+      </button>
+      <a class="header-home" href="https://neorgon.com/" title="neorgon.com" aria-label="Neorgon home" style="margin-left:5px">
         <svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
           <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/>
         </svg>
@@ -65,36 +70,44 @@
     </nav>
   </header>
 
+  <!-- Auth panel (collapsible, below header) -->
+  <div class="auth-panel" id="authPanel">
+    <div class="auth-panel-inner">
+      <div id="authGate">
+        <div class="auth-tabs">
+          <button class="auth-tab active" data-tab="login">Log In</button>
+          <button class="auth-tab" data-tab="register">Register</button>
+        </div>
+        <div class="auth-form" id="authLoginForm">
+          <input type="text" id="authLoginUser" placeholder="Username" autocomplete="username" maxlength="20">
+          <input type="password" id="authLoginPass" placeholder="Password" autocomplete="current-password">
+          <button class="auth-submit" id="authLoginBtn">Log In</button>
+        </div>
+        <div class="auth-form" id="authRegisterForm" hidden>
+          <input type="text" id="authRegUser" placeholder="Choose a username" autocomplete="username" maxlength="20">
+          <input type="password" id="authRegPass" placeholder="Choose a password" autocomplete="new-password">
+          <button class="auth-submit" id="authRegBtn">Register</button>
+        </div>
+      </div>
+      <div id="authUser" hidden>
+        <span class="auth-username" id="authUsername"></span>
+        <span class="auth-role" id="authRole" hidden>admin</span>
+        <button class="auth-logout" id="authLogout">Log out</button>
+      </div>
+    </div>
+  </div>
+  <div class="auth-divider"></div>
+
   <main class="container" id="main">
 
     <!-- Upload panel -->
     <div class="upload-panel" id="uploadPanel">
       <h3>Upload Meme</h3>
-      <!-- Auth gate: login/register -->
-      <div id="authGate">
-        <div class="auth-tabs">
-          <button class="auth-tab active" id="tabLogin">Log In</button>
-          <button class="auth-tab" id="tabRegister">Register</button>
-        </div>
-        <div class="auth-form" id="loginForm">
-          <input type="text" id="loginUser" placeholder="Username" autocomplete="username">
-          <input type="password" id="loginPass" placeholder="Password" autocomplete="current-password">
-          <button class="upload-submit-btn" id="loginSubmit">Log In</button>
-        </div>
-        <div class="auth-form" id="registerForm" style="display:none">
-          <input type="text" id="regUser" placeholder="Choose a username" autocomplete="username">
-          <input type="password" id="regPass" placeholder="Choose a password" autocomplete="new-password">
-          <button class="upload-submit-btn" id="regSubmit">Register</button>
-        </div>
+      <!-- Login prompt (shown when not logged in) -->
+      <div id="uploadLoginPrompt">
+        <p class="upload-login-msg">Log in to upload memes.</p>
       </div>
-      <!-- Logged-in header -->
-      <div id="authHeader" style="display:none">
-        <div class="auth-user-row">
-          <span class="auth-username" id="authUsername"></span>
-          <button class="auth-logout" id="logoutBtn">Log out</button>
-        </div>
-      </div>
-      <!-- Upload zone (hidden until logged in) -->
+      <!-- Upload zone (shown when logged in) -->
       <div id="uploadZone" style="display:none">
         <div class="drop-zone" id="dropZone">Drop an image here, or click to browse</div>
         <input type="file" id="fileInput" accept="image/png,image/jpeg,image/gif,image/webp" style="display:none">

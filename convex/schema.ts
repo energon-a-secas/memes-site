@@ -5,6 +5,7 @@ export default defineSchema({
   users: defineTable({
     username: v.string(),
     passwordHash: v.string(),
+    role: v.optional(v.string()),
   }).index("by_username", ["username"]),
 
   memes: defineTable({
