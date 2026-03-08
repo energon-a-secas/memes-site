@@ -72,6 +72,10 @@ ES modules require an HTTP server — `file://` will not work.
 
 HTML + CSS + JavaScript ES modules. Convex serverless backend (`convex@^1.21.0`) for auth, file storage, and voting. No other dependencies.
 
+## Architecture
+
+![Architecture](docs/architecture.svg)
+
 ## File structure
 
 ```

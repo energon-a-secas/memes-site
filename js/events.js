@@ -123,6 +123,9 @@ const uploadLoginPrompt = document.getElementById('uploadLoginPrompt');
 // Toggle auth panel
 authToggle.addEventListener('click', () => {
   authPanel.classList.toggle('open');
+  if (authPanel.classList.contains('open')) {
+    authPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
 });
 
 // Tab switching

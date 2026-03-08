@@ -1,0 +1,39 @@
+---
+config:
+  theme: base
+  themeVariables:
+    primaryColor: "#0f172a"
+    primaryTextColor: "#e2e8f0"
+    primaryBorderColor: "#0063e5"
+    lineColor: "#38bdf8"
+    secondaryColor: "#1e293b"
+    tertiaryColor: "#1e293b"
+    clusterBkg: "#f0f7ff"
+    clusterBorder: "#bfdbfe"
+    edgeLabelBackground: "#e8f0ff"
+    mainBkg: "#0f172a"
+    nodeBorder: "#0063e5"
+    titleColor: "#1e1b4b"
+    fontFamily: "ui-sans-serif, system-ui, -apple-system, sans-serif"
+    fontSize: "13px"
+---
+
+flowchart TB
+    User([User]) --> HTML["index.html\nApp shell"]
+
+    subgraph Frontend["Frontend (ES Modules)"]
+        HTML --> app["app.js\nEntry point"]
+        app --> state["state.js\nAuth + filter state"]
+        app --> render["render.js\nMeme grid + cards"]
+        app --> events["events.js\nUpload, vote, auth"]
+        app --> data["data.js\nConvex client layer"]
+        app --> utils["utils.js\nHelpers"]
+    end
+
+    subgraph Convex["Convex Backend"]
+        data -->|"mutations / queries"| auth["auth.ts\nLogin / register"]
+        data -->|"mutations / queries"| memes["memes.ts\nMeme CRUD + storage"]
+        data -->|"mutations / queries"| votes["votes.ts\nUpvote / downvote"]
+        auth & memes & votes --> DB[("Database\nusers / memes / votes")]
+        memes --> FS[("File Storage")]
+    end

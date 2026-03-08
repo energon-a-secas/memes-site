@@ -1,8 +1,32 @@
 // ── DOM rendering ────────────────────────────────────────────────────
-import { CATEGORIES } from './data.js';
+import { CATEGORIES, MEMES } from './data.js';
 import { state, getAllMemes, getUserRole } from './state.js';
 import { formatName, copyMemeImage, downloadMeme } from './utils.js';
 import { openLightbox, handleVoteClick, handleDeleteMeme } from './events.js';
+
+// ── Meme of the Day ─────────────────────────────────────────────────
+function getDayIndex(total) {
+  const d = new Date();
+  const seed = d.getFullYear() * 10000 + (d.getMonth() + 1) * 100 + d.getDate();
+  return ((seed * 2654435761) >>> 0) % total;
+}
+
+export function renderMemeOfTheDay() {
+  const all = MEMES;
+  if (all.length === 0) return;
+  const meme = all[getDayIndex(all.length)];
+  const banner = document.getElementById('motdBanner');
+  const img = document.getElementById('motdImg');
+  const name = document.getElementById('motdName');
+  img.src = meme.path;
+  img.alt = formatName(meme.name);
+  name.textContent = formatName(meme.name);
+  banner.style.display = 'block';
+
+  img.addEventListener('click', () => openLightbox(meme));
+  document.getElementById('motdView').addEventListener('click', () => openLightbox(meme));
+  document.getElementById('motdCopy').addEventListener('click', () => copyMemeImage(meme.path, meme.ext, false));
+}
 
 // ── SVG icon templates ───────────────────────────────────────────────
 const COPY_SVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>`;
