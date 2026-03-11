@@ -43,7 +43,7 @@ export function setUserRole(role) {
 // ── Mutable application state ────────────────────────────────────────
 export const state = {
   activeCategory: 'all',
-  sortBy: 'default',          // 'default' | 'votes'
+  sortBy: 'recent',           // 'recent' | 'default' | 'votes'
   convexMemes: [],
   selectedFile: null,
   voteCounts: {},              // { memeKey: number }  (upvotes - downvotes)
@@ -64,6 +64,7 @@ export function getAllMemes() {
     id: MEMES.length + i + 1,
     isNew: true,
     displayName: m.displayName || 'Anon',
+    _creationTime: m._creationTime,
   }));
   return [...MEMES, ...mapped];
 }

@@ -216,6 +216,12 @@ export function filterGrid() {
 
   if (state.sortBy === 'votes') {
     filtered.sort((a, b) => (state.voteCounts[b.name] || 0) - (state.voteCounts[a.name] || 0));
+  } else if (state.sortBy === 'recent') {
+    filtered.sort((a, b) => {
+      const aTime = a._creationTime ?? -a.id;
+      const bTime = b._creationTime ?? -b.id;
+      return bTime - aTime;
+    });
   }
 
   renderGrid(filtered);
