@@ -12,7 +12,6 @@ export const list = query({
         results.push({
           ...meme,
           url,
-          // Public display: show "Anon" if anonymous, otherwise show username
           displayName: meme.displayAnonymous ? "Anon" : meme.uploadedBy,
         });
       }
@@ -24,19 +23,24 @@ export const list = query({
 export const getUploadUrl = mutation({
   args: {},
   handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Not authenticated");
     return await ctx.storage.generateUploadUrl();
   },
 });
 
-/** Admin-only: delete a meme by its Convex _id. */
 export const deleteMeme = mutation({
-  args: { memeId: v.id("memes"), adminUsername: v.string() },
+  args: { memeId: v.id("memes") },
   handler: async (ctx, args) => {
-    const admin = await ctx.db
-      .query("users")
-      .withIndex("by_username", (q) => q.eq("username", args.adminUsername.trim().toLowerCase()))
-      .first();
-    if (!admin || admin.role !== "admin") {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      return { ok: false, error: "Not authenticated" };
+    }
+    const admins = (process.env.ADMIN_SUBJECTS || "")
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean);
+    if (!admins.includes(identity.subject)) {
       return { ok: false, error: "Not authorized" };
     }
     const meme = await ctx.db.get(args.memeId);
@@ -53,17 +57,24 @@ export const saveMeme = mutation({
     category: v.string(),
     ext: v.string(),
     storageId: v.id("_storage"),
-    uploadedBy: v.string(),
     displayAnonymous: v.boolean(),
   },
   handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Not authenticated");
+    const uploadedBy =
+      (identity.name && String(identity.name).trim()) ||
+      (identity.email && identity.email.split("@")[0]) ||
+      "Member";
+
     await ctx.db.insert("memes", {
       name: args.name,
       category: args.category,
       ext: args.ext,
       storageId: args.storageId,
-      uploadedBy: args.uploadedBy,
+      uploadedBy,
       displayAnonymous: args.displayAnonymous,
+      ownerSubject: identity.subject,
     });
   },
 });

@@ -1,6 +1,6 @@
 // ── DOM rendering ────────────────────────────────────────────────────
 import { CATEGORIES, MEMES } from './data.js';
-import { state, getAllMemes, getUserRole } from './state.js';
+import { state, getAllMemes } from './state.js';
 import { formatName, copyMemeImage, downloadMeme } from './utils.js';
 import { openLightbox, handleVoteClick, handleDeleteMeme } from './events.js';
 
@@ -148,7 +148,7 @@ export function makeCard(m) {
   overlay.appendChild(dlBtn);
 
   // Admin: delete button for Convex-uploaded memes
-  if (getUserRole() === 'admin' && m._id) {
+  if (state.isConvexAdmin && m._id) {
     const delBtn = document.createElement('button');
     delBtn.className = 'overlay-btn overlay-btn--delete';
     delBtn.title = 'Delete (admin)';

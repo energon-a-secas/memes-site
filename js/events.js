@@ -1,6 +1,6 @@
 // ── Event handlers ───────────────────────────────────────────────────
 import { MEMES } from './data.js';
-import { state, convex, api, visitorId, getAllMemes, getLoggedInUser, setLoggedInUser, getUserRole, setUserRole } from './state.js';
+import { state, convex, api, visitorId, getAllMemes, getLoggedInUser, setAuthSession } from './state.js';
 import { showToast, formatName, copyMemeUrl, copyMemeImage, downloadMeme } from './utils.js';
 import { rebuildChips, filterGrid, renderRecentlyAdded } from './render.js';
 
@@ -88,10 +88,9 @@ export async function handleVoteClick(memeKey, direction = 1) {
 // ── Admin: delete meme ──────────────────────────────────────────────
 export async function handleDeleteMeme(memeId, memeName) {
   if (!confirm(`Delete "${memeName}"?`)) return;
-  const username = getLoggedInUser();
-  if (!username) { showToast('Login required'); return; }
+  if (!getLoggedInUser()) { showToast('Sign in required'); return; }
   try {
-    const result = await convex.mutation(api.memes.deleteMeme, { memeId, adminUsername: username });
+    const result = await convex.mutation(api.memes.deleteMeme, { memeId });
     if (result.ok) {
       showToast('Meme deleted');
       await loadConvexMemes();
@@ -110,105 +109,144 @@ uploadToggle.addEventListener('click', () => {
   uploadPanel.classList.toggle('open');
 });
 
-// ── Auth panel (standardized) ────────────────────────────────────────
+// ── Auth (Clerk + Convex JWT) ────────────────────────────────────────
 const authToggle     = document.getElementById('authToggle');
 const authPanel      = document.getElementById('authPanel');
 const authGate       = document.getElementById('authGate');
 const authUserEl     = document.getElementById('authUser');
 const authUsernameEl = document.getElementById('authUsername');
-const authRoleEl     = document.getElementById('authRole');
 const uploadZone     = document.getElementById('uploadZone');
 const uploadLoginPrompt = document.getElementById('uploadLoginPrompt');
 
-// Toggle auth panel
-authToggle.addEventListener('click', () => {
-  authPanel.classList.toggle('open');
-  if (authPanel.classList.contains('open')) {
-    authPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+async function refreshAdminFlag() {
+  if (!getLoggedInUser()) {
+    setAuthSession(null, false);
+    return;
   }
-});
+  try {
+    const isAd = await convex.query(api.auth.isAdmin, {});
+    setAuthSession(state.authLabel, !!isAd);
+  } catch {
+    setAuthSession(state.authLabel, false);
+  }
+}
 
-// Tab switching
-document.querySelectorAll('.auth-tab').forEach(tab => {
-  tab.addEventListener('click', () => {
-    document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
-    tab.classList.add('active');
-    const isLogin = tab.dataset.tab === 'login';
-    document.getElementById('authLoginForm').hidden = !isLogin;
-    document.getElementById('authRegisterForm').hidden = isLogin;
-  });
-});
+async function refreshLegacyLinkSection() {
+  const section = document.getElementById('legacyLinkSection');
+  const msg = document.getElementById('legacyLinkMessage');
+  if (!section) return;
+  if (!getLoggedInUser()) {
+    section.hidden = true;
+    return;
+  }
+  try {
+    const link = await convex.query(api.migration.myAccountLink, {});
+    section.hidden = !!link;
+    if (msg) {
+      msg.hidden = true;
+      msg.textContent = '';
+      msg.classList.remove('legacy-link-message--err');
+    }
+  } catch {
+    section.hidden = true;
+  }
+}
 
-/** Update UI after login/logout. */
-function renderAuthState(username, role) {
-  const loggedIn = !!username;
+async function onLegacyLinkClick() {
+  const userEl = document.getElementById('legacyLinkUser');
+  const passEl = document.getElementById('legacyLinkPassword');
+  const msg = document.getElementById('legacyLinkMessage');
+  const section = document.getElementById('legacyLinkSection');
+  const username = userEl?.value?.trim() || '';
+  const password = passEl?.value || '';
+  if (!username || !password) {
+    if (msg) {
+      msg.textContent = 'Enter legacy username and password.';
+      msg.classList.add('legacy-link-message--err');
+      msg.hidden = false;
+    }
+    return;
+  }
+  try {
+    const res = await convex.mutation(api.migration.linkLegacyAccount, { username, password });
+    if (res.ok) {
+      if (msg) {
+        msg.textContent = `Linked @${res.legacyUsername}.`;
+        msg.classList.remove('legacy-link-message--err');
+        msg.hidden = false;
+      }
+      if (userEl) userEl.value = '';
+      if (passEl) passEl.value = '';
+      if (section) section.hidden = true;
+      showToast('Legacy account linked');
+    } else if (msg) {
+      msg.textContent = res.error || 'Link failed';
+      msg.classList.add('legacy-link-message--err');
+      msg.hidden = false;
+    }
+  } catch {
+    if (msg) {
+      msg.textContent = 'Link failed. Try again.';
+      msg.classList.add('legacy-link-message--err');
+      msg.hidden = false;
+    }
+  }
+}
+
+/** Call from app.js before first render that depends on auth. */
+export async function initMemesAuth() {
+  const pk = document.querySelector('meta[name="clerk-publishable-key"]')?.content?.trim();
+  if (!pk) {
+    console.warn('Meme Vault: add clerk-publishable-key meta for uploads.');
+    return;
+  }
+  try {
+    const { initNeorgonClerkConvex, neorgonDisplayLabel } = await import('./vendor/neorgon-auth.js');
+    await initNeorgonClerkConvex({
+      convex,
+      publishableKey: pk,
+      signInHost: '#neorgon-signin-mount',
+      userButtonHost: '#neorgon-user-mount',
+      signInProps: {
+        appearance: { layout: { unsafe_disableDevelopmentModeWarnings: true } },
+      },
+      onSession: ({ clerk, hasSession }) => {
+        if (hasSession) {
+          setAuthSession(neorgonDisplayLabel(clerk), false);
+          void refreshAdminFlag();
+          void refreshLegacyLinkSection();
+        } else {
+          setAuthSession(null, false);
+        }
+        renderAuthState();
+        filterGrid();
+        renderRecentlyAdded();
+    });
+  } catch (e) {
+    console.warn('Meme Vault: Clerk init failed', e);
+  }
+}
+
+function renderAuthState() {
+  const loggedIn = !!getLoggedInUser();
+  if (!authGate || !authUserEl) return;
   authGate.hidden = loggedIn;
   authUserEl.hidden = !loggedIn;
   authToggle.classList.toggle('logged-in', loggedIn);
-  if (loggedIn) {
-    authUsernameEl.textContent = username;
-    authRoleEl.hidden = role !== 'admin';
-  }
-  // Upload panel: show/hide zone vs login prompt
+  if (loggedIn && authUsernameEl) authUsernameEl.textContent = state.authLabel || '';
   if (uploadZone) uploadZone.style.display = loggedIn ? 'block' : 'none';
   if (uploadLoginPrompt) uploadLoginPrompt.style.display = loggedIn ? 'none' : 'block';
 }
 
-// Restore session
-const savedUser = getLoggedInUser();
-if (savedUser) renderAuthState(savedUser, getUserRole());
-
-/** Handle login or register. */
-async function handleAuth(action) {
-  const isLogin = action === 'login';
-  const userEl = document.getElementById(isLogin ? 'authLoginUser' : 'authRegUser');
-  const passEl = document.getElementById(isLogin ? 'authLoginPass' : 'authRegPass');
-  const username = userEl.value.trim();
-  const password = passEl.value;
-  if (!username || !password) { showToast('Enter username and password'); return; }
-
-  try {
-    const fn = isLogin ? api.auth.login : api.auth.register;
-    const result = await convex.mutation(fn, { username, password });
-    if (result.ok) {
-      const role = result.role || 'user';
-      setLoggedInUser(result.username);
-      setUserRole(role);
-      renderAuthState(result.username, role);
-      showToast(isLogin ? `Welcome back, ${result.username}` : `Welcome, ${result.username}!`);
-      userEl.value = '';
-      passEl.value = '';
-    } else {
-      showToast(result.error);
-    }
-  } catch {
-    showToast(`${isLogin ? 'Login' : 'Registration'} failed. Check Convex config`);
+authToggle.addEventListener('click', () => {
+  authPanel.classList.toggle('open');
+  if (authPanel.classList.contains('open')) {
+    authPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    if (getLoggedInUser()) void refreshLegacyLinkSection();
   }
-}
-
-// Auth buttons
-document.getElementById('authLoginBtn').addEventListener('click', () => handleAuth('login'));
-document.getElementById('authRegBtn').addEventListener('click', () => handleAuth('register'));
-
-// Enter key on auth forms
-['authLoginUser', 'authLoginPass'].forEach(id => {
-  document.getElementById(id).addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') handleAuth('login');
-  });
-});
-['authRegUser', 'authRegPass'].forEach(id => {
-  document.getElementById(id).addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') handleAuth('register');
-  });
 });
 
-// Logout
-document.getElementById('authLogout').addEventListener('click', () => {
-  setLoggedInUser(null);
-  setUserRole(null);
-  renderAuthState(null);
-  showToast('Logged out');
-});
+document.getElementById('legacyLinkBtn')?.addEventListener('click', () => { void onLegacyLinkClick(); });
 
 // ── Drag-and-drop / file picker ──────────────────────────────────────
 const dropZone       = document.getElementById('dropZone');
@@ -251,8 +289,7 @@ uploadSubmit.addEventListener('click', async () => {
   const name = memeNameInput.value.trim();
   if (!name) { showToast('Add a name first'); return; }
 
-  const username = getLoggedInUser();
-  if (!username) { showToast('Please log in first'); return; }
+  if (!getLoggedInUser()) { showToast('Please sign in first'); return; }
 
   uploadSubmit.disabled = true;
   uploadSubmit.textContent = 'Uploading\u2026';
@@ -274,7 +311,6 @@ uploadSubmit.addEventListener('click', async () => {
       category: memeCatSelect.value,
       ext,
       storageId,
-      uploadedBy: username,
       displayAnonymous: isAnon,
     });
 

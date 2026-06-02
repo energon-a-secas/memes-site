@@ -3,14 +3,21 @@ import { ConvexHttpClient } from "https://esm.sh/convex@1.21.0/browser";
 import { MEMES, CATEGORIES } from './data.js';
 
 // ── Convex client ────────────────────────────────────────────────────
-const CONVEX_URL = "https://basic-ant-744.convex.cloud";
+const CONVEX_URL = "https://polite-jellyfish-291.convex.cloud";
 export const convex = new ConvexHttpClient(CONVEX_URL);
 
 // Function references (strings at runtime — no build step needed)
 export const api = {
   memes: { list: "memes:list", getUploadUrl: "memes:getUploadUrl", saveMeme: "memes:saveMeme", deleteMeme: "memes:deleteMeme" },
-  auth:  { register: "auth:register", login: "auth:login", getRole: "auth:getRole", setRole: "auth:setRole" },
+  auth: { isAdmin: "auth:isAdmin" },
   votes: { getVotes: "votes:getVotes", toggleVote: "votes:toggleVote" },
+  migration: {
+    myAccountLink: "migration:myAccountLink",
+    linkLegacyAccount: "migration:linkLegacyAccount",
+    getUserSetting: "migration:getUserSetting",
+    setUserSetting: "migration:setUserSetting",
+    listUserSettings: "migration:listUserSettings",
+  },
 };
 
 // ── Visitor ID (persistent, used for vote dedup) ─────────────────────
@@ -24,22 +31,6 @@ function getVisitorId() {
 }
 export const visitorId = getVisitorId();
 
-// ── Auth state (persisted in localStorage) ───────────────────────────
-export function getLoggedInUser() {
-  return localStorage.getItem('meme-vault-user') || null;
-}
-export function setLoggedInUser(username) {
-  if (username) localStorage.setItem('meme-vault-user', username);
-  else localStorage.removeItem('meme-vault-user');
-}
-export function getUserRole() {
-  return localStorage.getItem('meme-vault-role') || 'user';
-}
-export function setUserRole(role) {
-  if (role && role !== 'user') localStorage.setItem('meme-vault-role', role);
-  else localStorage.removeItem('meme-vault-role');
-}
-
 // ── Mutable application state ────────────────────────────────────────
 export const state = {
   activeCategory: 'all',
@@ -49,7 +40,25 @@ export const state = {
   voteCounts: {},              // { memeKey: number }  (upvotes - downvotes)
   myVotes: new Set(),          // set of memeKey strings I upvoted
   myDownvotes: new Set(),      // set of memeKey strings I downvoted
+  authLabel: null,
+  isConvexAdmin: false,
 };
+
+export function setAuthSession(label, isAdmin) {
+  state.authLabel = label || null;
+  state.isConvexAdmin = !!isAdmin;
+}
+
+export function getLoggedInUser() {
+  return state.authLabel;
+}
+
+/** @deprecated */
+export function setLoggedInUser() {}
+export function getUserRole() {
+  return state.isConvexAdmin ? 'admin' : 'user';
+}
+export function setUserRole() {}
 
 // ── Derived data ─────────────────────────────────────────────────────
 
