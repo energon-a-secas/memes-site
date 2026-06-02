@@ -66,9 +66,10 @@ export async function handleVoteClick(memeKey, direction = 1) {
       showToast('Vote removed');
     }
 
-    // Burst animation on upvote
-    if (action === 'added' && dir > 0) {
-      document.querySelectorAll('.vote-btn:not(.downvote)').forEach(btn => {
+    // Burst animation on the button that was just activated (up or down)
+    if (action === 'added' || action === 'switched') {
+      const sel = dir > 0 ? '.vote-btn:not(.downvote)' : '.vote-btn.downvote';
+      document.querySelectorAll(sel).forEach(btn => {
         const card = btn.closest('.meme-card');
         if (card && card.querySelector('.meme-name')?.textContent === formatName(memeKey)) {
           btn.classList.remove('burst');
@@ -221,6 +222,7 @@ export async function initMemesAuth() {
         renderAuthState();
         filterGrid();
         renderRecentlyAdded();
+      },
     });
   } catch (e) {
     console.warn('Meme Vault: Clerk init failed', e);
@@ -360,6 +362,8 @@ function setLightboxMeme(meme, index) {
   }, 150);
 }
 
+let lightboxReturnFocus = null;
+
 export function openLightbox(meme) {
   currentList = getAllMemes();
   const idx = currentList.findIndex(m => m.name === meme.name && m.path === meme.path);
@@ -370,14 +374,22 @@ export function openLightbox(meme) {
   lightboxName.textContent = formatName(meme.name);
   lightboxCounter.textContent = `${currentIndex + 1} / ${currentList.length}`;
   lightbox.classList.add('open');
+  lightbox.setAttribute('aria-hidden', 'false');
   document.body.style.overflow = 'hidden';
+  lightboxReturnFocus = document.activeElement;
+  lbClose.focus();
 }
 
 function closeLightbox() {
   lightbox.classList.remove('open');
+  lightbox.setAttribute('aria-hidden', 'true');
   document.body.style.overflow = '';
   currentMeme = null;
   currentIndex = -1;
+  if (lightboxReturnFocus && typeof lightboxReturnFocus.focus === 'function') {
+    lightboxReturnFocus.focus();
+  }
+  lightboxReturnFocus = null;
 }
 
 function navigateLightbox(dir) {
@@ -408,9 +420,26 @@ lbDownload.addEventListener('click', () => {
 
 document.addEventListener('keydown', (e) => {
   if (!lightbox.classList.contains('open')) return;
-  if (e.key === 'Escape') closeLightbox();
-  if (e.key === 'ArrowLeft')  navigateLightbox(-1);
-  if (e.key === 'ArrowRight') navigateLightbox(1);
+  if (e.key === 'Escape') { closeLightbox(); return; }
+  if (e.key === 'ArrowLeft')  { navigateLightbox(-1); return; }
+  if (e.key === 'ArrowRight') { navigateLightbox(1); return; }
+  if (e.key === 'Tab') {
+    // Trap focus among the lightbox's interactive controls.
+    const focusable = lightbox.querySelectorAll('button:not([disabled])');
+    if (!focusable.length) return;
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+    if (e.shiftKey && document.activeElement === first) {
+      e.preventDefault();
+      last.focus();
+    } else if (!e.shiftKey && document.activeElement === last) {
+      e.preventDefault();
+      first.focus();
+    } else if (!lightbox.contains(document.activeElement)) {
+      e.preventDefault();
+      first.focus();
+    }
+  }
 });
 
 // ── Random meme ──────────────────────────────────────────────────────

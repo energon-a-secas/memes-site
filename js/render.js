@@ -78,11 +78,13 @@ export function rebuildChips() {
 export function makeCard(m) {
   const card = document.createElement('div');
   card.className = 'meme-card';
+  card.setAttribute('role', 'listitem');
+  const readableName = formatName(m.name);
 
   const img = document.createElement('img');
   img.className = 'meme-img';
   img.src = m.path;
-  img.alt = formatName(m.name);
+  img.alt = readableName;
   img.loading = 'lazy';
   if (m.isNew) img.crossOrigin = 'anonymous';
   img.addEventListener('load', () => img.classList.add('loaded'), { once: true });
@@ -107,15 +109,20 @@ export function makeCard(m) {
   const upBtn = document.createElement('button');
   upBtn.className = 'vote-btn' + (hasUp ? ' voted' : '');
   upBtn.innerHTML = hasUp ? HEART_FILLED_SVG : HEART_SVG;
+  upBtn.setAttribute('aria-label', `Upvote ${readableName}`);
+  upBtn.setAttribute('aria-pressed', hasUp ? 'true' : 'false');
   upBtn.addEventListener('click', (e) => { e.stopPropagation(); handleVoteClick(m.name, 1); });
 
   const scoreEl = document.createElement('span');
   scoreEl.className = 'vote-score' + (score > 0 ? ' positive' : score < 0 ? ' negative' : '');
   scoreEl.textContent = score !== 0 ? String(score) : '';
+  if (score !== 0) scoreEl.setAttribute('aria-label', `Score ${score}`);
 
   const downBtn = document.createElement('button');
   downBtn.className = 'vote-btn downvote' + (hasDown ? ' voted' : '');
   downBtn.innerHTML = hasDown ? THUMBDOWN_FILLED_SVG : THUMBDOWN_SVG;
+  downBtn.setAttribute('aria-label', `Downvote ${readableName}`);
+  downBtn.setAttribute('aria-pressed', hasDown ? 'true' : 'false');
   downBtn.addEventListener('click', (e) => { e.stopPropagation(); handleVoteClick(m.name, -1); });
 
   voteRow.appendChild(upBtn);
@@ -128,18 +135,21 @@ export function makeCard(m) {
   const viewBtn = document.createElement('button');
   viewBtn.className = 'overlay-btn';
   viewBtn.title = 'View';
+  viewBtn.setAttribute('aria-label', `View ${readableName}`);
   viewBtn.innerHTML = VIEW_SVG;
   viewBtn.addEventListener('click', (e) => { e.stopPropagation(); openLightbox(m); });
 
   const copyBtn = document.createElement('button');
   copyBtn.className = 'overlay-btn';
   copyBtn.title = 'Copy Image';
+  copyBtn.setAttribute('aria-label', `Copy ${readableName} image`);
   copyBtn.innerHTML = COPY_SVG;
   copyBtn.addEventListener('click', (e) => { e.stopPropagation(); copyMemeImage(m.path, m.ext, m.isNew); });
 
   const dlBtn = document.createElement('button');
   dlBtn.className = 'overlay-btn';
   dlBtn.title = 'Download';
+  dlBtn.setAttribute('aria-label', `Download ${readableName}`);
   dlBtn.innerHTML = DL_SVG;
   dlBtn.addEventListener('click', (e) => { e.stopPropagation(); downloadMeme(m.path, `${m.name}.${m.ext}`); });
 
@@ -152,17 +162,20 @@ export function makeCard(m) {
     const delBtn = document.createElement('button');
     delBtn.className = 'overlay-btn overlay-btn--delete';
     delBtn.title = 'Delete (admin)';
+    delBtn.setAttribute('aria-label', `Delete ${readableName}`);
     delBtn.innerHTML = TRASH_SVG;
     delBtn.addEventListener('click', (e) => { e.stopPropagation(); handleDeleteMeme(m._id, m.name); });
     overlay.appendChild(delBtn);
   }
 
-  // Wrap image + overlay together so overlay only covers the image
+  // Wrap image + overlay together so overlay only covers the image.
+  // The card (a div) opens the lightbox on click; the vote and overlay
+  // buttons stopPropagation. Keyboard users reach the overlay's View
+  // button, revealed via :focus-within.
   const imgWrap = document.createElement('div');
   imgWrap.className = 'meme-img-wrap';
   imgWrap.appendChild(img);
   imgWrap.appendChild(overlay);
-
   card.addEventListener('click', () => openLightbox(m));
   card.appendChild(imgWrap);
   card.appendChild(meta);
@@ -177,14 +190,31 @@ export function makeCard(m) {
   return card;
 }
 
+const EMPTY_SVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="8" y1="11" x2="14" y2="11"/></svg>`;
+
 // ── Grid rendering ───────────────────────────────────────────────────
 function renderGrid(memes) {
   grid.innerHTML = '';
   if (memes.length === 0) {
+    const q = searchInput.value.trim();
+    const filtered = q || state.activeCategory !== 'all';
     const el = document.createElement('div');
     el.className = 'empty-state';
-    el.textContent = 'No memes match your search';
+    el.innerHTML = `
+      ${EMPTY_SVG}
+      <div class="empty-state-title">${filtered ? 'No memes match' : 'No memes yet'}</div>
+      <div class="empty-state-hint">${filtered
+        ? 'Try a different word or clear the category filter.'
+        : 'Upload the first one to get the vault started.'}</div>
+      ${filtered ? '<button type="button" class="empty-state-reset" id="emptyReset">Clear search &amp; filters</button>' : ''}`;
     grid.appendChild(el);
+    const reset = document.getElementById('emptyReset');
+    if (reset) reset.addEventListener('click', () => {
+      searchInput.value = '';
+      state.activeCategory = 'all';
+      document.querySelectorAll('.chip').forEach(x => x.classList.toggle('active', x.dataset.value === 'all'));
+      filterGrid();
+    });
   } else {
     const frag = document.createDocumentFragment();
     const isFirstRender = !grid.classList.contains('loaded');

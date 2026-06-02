@@ -460,6 +460,14 @@ nav { display: flex; align-items: center; gap: 8px; margin-left: auto; }
   100% { transform: scale(1); }
 }
 .vote-btn svg { width: 13px; height: 13px; display: block; flex-shrink: 0; }
+.vote-btn:focus-visible {
+  outline: 2px solid var(--accent-bright);
+  outline-offset: 2px;
+}
+.vote-btn[aria-busy="true"] {
+  opacity: .55;
+  cursor: progress;
+}
 .vote-btn.downvote:hover {
   color: #f87171;
   border-color: rgba(248,113,113,.3);
@@ -500,7 +508,8 @@ nav { display: flex; align-items: center; gap: 8px; margin-left: auto; }
   pointer-events: none;
   transition: opacity var(--dur);
 }
-.meme-img-wrap:hover .meme-overlay {
+.meme-img-wrap:hover .meme-overlay,
+.meme-card:focus-within .meme-overlay {
   opacity: 1;
   pointer-events: auto;
 }
@@ -526,11 +535,48 @@ nav { display: flex; align-items: center; gap: 8px; margin-left: auto; }
 /* ── Empty state ─────────────────────────────────────────────────── */
 .empty-state {
   grid-column: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
   text-align: center;
   padding: 64px 20px;
+  color: var(--text-secondary);
+}
+.empty-state svg {
+  width: 42px;
+  height: 42px;
   color: var(--text-muted);
-  font-family: var(--font-mono);
-  font-size: .85rem;
+  opacity: .7;
+}
+.empty-state-title {
+  font-size: .95rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+.empty-state-hint {
+  font-size: .82rem;
+  color: var(--text-muted);
+  max-width: 32ch;
+  line-height: 1.5;
+}
+.empty-state-reset {
+  margin-top: 4px;
+  padding: 7px 16px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-strong);
+  background: var(--surface-1);
+  color: var(--text-secondary);
+  font: inherit;
+  font-size: .8rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: color .15s, border-color .15s, background .15s;
+}
+.empty-state-reset:hover {
+  color: var(--text-primary);
+  border-color: rgba(0,99,229,.4);
+  background: rgba(0,99,229,.07);
 }
 
 /* ── Lightbox ────────────────────────────────────────────────────── */
@@ -1031,6 +1077,10 @@ button:active, .btn:active {
   .auth-panel.open { max-height: 220px; }
   .auth-form { flex-direction: column; }
   .auth-form input { width: 100%; }
+  /* Larger touch targets for the compact vote controls on phones */
+  .vote-btn { padding: 7px 12px; }
+  .vote-row { gap: 8px; }
+  .overlay-btn { width: 44px; height: 44px; }
 }
 
 .neorgon-clerk-mount { min-height: 8px; }
