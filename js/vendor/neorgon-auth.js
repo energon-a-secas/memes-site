@@ -28,19 +28,25 @@ function el(host) {
   return host;
 }
 
-/** @param {import("@clerk/clerk-js").LoadedClerk} clerk */
-/** @param {import("https://esm.sh/convex@1.21.0/browser").ConvexHttpClient} convex */
-function bindConvexAuth(clerk, convex) {
-  convex.setAuth(async () => {
-    try {
-      const session = clerk.session;
-      if (!session) return null;
-      const token = await session.getToken({ template: "convex" });
-      return token ?? null;
-    } catch {
-      return null;
+/**
+ * ConvexHttpClient.setAuth() only accepts a JWT string (unlike ConvexClient WebSocket, which
+ * accepts a token fetcher). Resolve Clerk's Convex template token and set or clear auth.
+ * @param {import("@clerk/clerk-js").LoadedClerk} clerk
+ * @param {import("https://esm.sh/convex@1.21.0/browser").ConvexHttpClient} convex
+ */
+async function syncConvexHttpJwt(clerk, convex) {
+  try {
+    const session = clerk.session;
+    if (!session) {
+      convex.clearAuth();
+      return;
     }
-  });
+    const token = await session.getToken({ template: "convex" });
+    if (token) convex.setAuth(token);
+    else convex.clearAuth();
+  } catch {
+    convex.clearAuth();
+  }
 }
 
 /**
@@ -91,9 +97,9 @@ export async function initNeorgonClerkConvex(options) {
     if (userEl) userEl.replaceChildren();
   }
 
-  function mountClerkUi() {
+  async function mountClerkUi() {
     unmountClerkUi();
-    bindConvexAuth(clerk, convex);
+    await syncConvexHttpJwt(clerk, convex);
     if (clerk.session && userEl) {
       clerk.mountUserButton(userEl, {
         ...userButtonProps,
@@ -117,20 +123,21 @@ export async function initNeorgonClerkConvex(options) {
   } else {
     await clerk.load();
   }
-  bindConvexAuth(clerk, convex);
-  mountClerkUi();
+  await mountClerkUi();
 
   if (typeof clerk.addListener === "function") {
     let prev = !!clerk.session;
     clerk.addListener(() => {
-      const next = !!clerk.session;
-      bindConvexAuth(clerk, convex);
-      if (next !== prev) {
-        prev = next;
-        mountClerkUi();
-      } else {
-        onSession?.({ clerk, hasSession: next });
-      }
+      void (async () => {
+        await syncConvexHttpJwt(clerk, convex);
+        const next = !!clerk.session;
+        if (next !== prev) {
+          prev = next;
+          await mountClerkUi();
+        } else {
+          onSession?.({ clerk, hasSession: next });
+        }
+      })();
     });
   }
 

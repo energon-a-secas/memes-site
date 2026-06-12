@@ -240,6 +240,12 @@ function renderAuthState() {
   if (uploadLoginPrompt) uploadLoginPrompt.style.display = loggedIn ? 'none' : 'block';
 }
 
+function openAuthPanel() {
+  authPanel.classList.add('open');
+  authPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  if (getLoggedInUser()) void refreshLegacyLinkSection();
+}
+
 authToggle.addEventListener('click', () => {
   authPanel.classList.toggle('open');
   if (authPanel.classList.contains('open')) {
@@ -247,6 +253,8 @@ authToggle.addEventListener('click', () => {
     if (getLoggedInUser()) void refreshLegacyLinkSection();
   }
 });
+
+document.getElementById('uploadSigninBtn')?.addEventListener('click', openAuthPanel);
 
 document.getElementById('legacyLinkBtn')?.addEventListener('click', () => { void onLegacyLinkClick(); });
 
