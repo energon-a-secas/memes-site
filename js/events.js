@@ -4,6 +4,11 @@ import { state, convex, api, visitorId, getAllMemes, getLoggedInUser, setAuthSes
 import { showToast, formatName, copyMemeUrl, copyMemeImage, downloadMeme } from './utils.js';
 import { rebuildChips, filterGrid, renderRecentlyAdded } from './render.js';
 
+// Respect prefers-reduced-motion for JS-driven smooth scrolling.
+const prefersReducedMotion = () =>
+  window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+const scrollBehavior = () => (prefersReducedMotion() ? 'auto' : 'smooth');
+
 // ── Search input ─────────────────────────────────────────────────────
 const searchInput = document.getElementById('searchInput');
 searchInput.addEventListener('input', filterGrid);
@@ -107,7 +112,8 @@ export async function handleDeleteMeme(memeId, memeName) {
 const uploadToggle = document.getElementById('uploadToggle');
 const uploadPanel  = document.getElementById('uploadPanel');
 uploadToggle.addEventListener('click', () => {
-  uploadPanel.classList.toggle('open');
+  const open = uploadPanel.classList.toggle('open');
+  uploadToggle.setAttribute('aria-expanded', open ? 'true' : 'false');
 });
 
 // ── Auth (Clerk + Convex JWT) ────────────────────────────────────────
@@ -242,14 +248,16 @@ function renderAuthState() {
 
 function openAuthPanel() {
   authPanel.classList.add('open');
-  authPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  authToggle.setAttribute('aria-expanded', 'true');
+  authPanel.scrollIntoView({ behavior: scrollBehavior(), block: 'start' });
   if (getLoggedInUser()) void refreshLegacyLinkSection();
 }
 
 authToggle.addEventListener('click', () => {
-  authPanel.classList.toggle('open');
-  if (authPanel.classList.contains('open')) {
-    authPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  const open = authPanel.classList.toggle('open');
+  authToggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+  if (open) {
+    authPanel.scrollIntoView({ behavior: scrollBehavior(), block: 'start' });
     if (getLoggedInUser()) void refreshLegacyLinkSection();
   }
 });
@@ -464,5 +472,5 @@ window.addEventListener('scroll', () => {
   scrollTopBtn.classList.toggle('visible', window.scrollY > 400);
 }, { passive: true });
 scrollTopBtn.addEventListener('click', () => {
-  window.scrollTo({ top: 0, behavior: 'smooth' });
+  window.scrollTo({ top: 0, behavior: scrollBehavior() });
 });
