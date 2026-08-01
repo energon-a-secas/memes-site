@@ -44,34 +44,7 @@ main#main.container {
   width: 100%;
 }
 
-/* ── Header ───────────────────────────────────────────────────────── */
-.header-bar {
-  background: linear-gradient(in oklch 135deg, #B015B0 0%, #3D0080 50%, #040714 100%);
-  backdrop-filter: blur(12px);
-  border-bottom: 1px solid var(--border-subtle);
-  padding: 0 var(--space-6);
-  height: 68px;
-  position: sticky;
-  top: 0;
-  z-index: 200;
-  display: flex;
-  align-items: center;
-}
-
-.header-logo { display: flex; align-items: center; gap: 10px; flex-shrink: 0; text-decoration: none; color: inherit; }
-
-.header-logo-img {
-  height: 36px; width: auto; flex-shrink: 0;
-  filter: brightness(0) invert(1);
-  transition: transform 0.3s var(--ease-snap);
-  display: block;
-}
-.header-logo-img:hover { transform: scale(1.14) rotate(-9deg); }
-
-.header-logo h1 { font-size: 1.2em; font-weight: 600; color: var(--text-primary); letter-spacing: .5px; }
-.header-subtitle { font-size: .82em; color: rgba(255,255,255,.72); font-weight: 500; margin-top: 3px; font-family: var(--font-mono); }
-
-nav { display: flex; align-items: center; gap: 8px; margin-left: auto; }
+nav { display: flex; align-items: center; gap: 8px; }
 .nav-link {
   font-size: .8rem; font-weight: 500; color: var(--text-secondary);
   text-decoration: none; padding: 5px 12px; border-radius: 20px;
@@ -84,17 +57,6 @@ nav { display: flex; align-items: center; gap: 8px; margin-left: auto; }
   color: var(--accent);
   border-color: rgba(0,99,229,.2);
 }
-
-.header-home {
-  display: flex; align-items: center;
-  margin-left: 5px;
-  padding: 5px;
-  color: rgba(255,255,255,0.9); text-decoration: none;
-  border-radius: var(--radius-sm);
-  transition: color .2s, background .2s; flex-shrink: 0;
-}
-.header-home:hover { color: #fff; background: rgba(255,255,255,0.12); }
-.header-home svg { width: 34px; height: 34px; display: block; }
 
 /* ── Main container ──────────────────────────────────────────────── */
 .container {
@@ -1076,9 +1038,6 @@ button:active, .btn:active {
 @media (max-width: 600px) {
   .container { padding: 20px 16px; }
   .meme-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
-  .header-bar { padding: 0 var(--space-4); }
-  .header-logo h1 { font-size: 1rem; }
-  .header-subtitle { display: none; }
   .lightbox-actions { flex-wrap: wrap; justify-content: center; }
   .lightbox-btn span { display: none; }
   .lightbox-btn { padding: 10px; }
@@ -1136,9 +1095,6 @@ button:active, .btn:active {
 
 .legacy-link-message { font-size: 0.85rem; color: #4ade80; }
 .legacy-link-message--err { color: #f87171; }
-
-/* ── Template alignment (header title link + footer) ── */
-.header-title-link { text-decoration: none; color: inherit; }
 .info-footer {
   text-align: center;
   padding: 24px 24px 28px;
