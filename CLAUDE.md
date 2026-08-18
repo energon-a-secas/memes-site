@@ -12,15 +12,15 @@ make deploy      # Deploy Convex functions to production (no watcher)
 make login       # Authenticate with Convex CLI
 ```
 
-Both `make dev` (terminal 1) and `make serve` (terminal 2) must run simultaneously for local development. The frontend loads Convex via ESM CDN (`https://esm.sh/convex@1.21.0/browser`) — no build step needed on the frontend side.
+Both `make dev` (terminal 1) and `make serve` (terminal 2) must run simultaneously for local development. The frontend loads Convex via ESM CDN (`https://esm.sh/convex@1.21.0/browser`). No build step needed on the frontend side.
 
 ## Architecture
 
-**Dual meme source:** The collection merges 67 hardcoded memes from `js/data.js` (static files in `assets/images/`) with dynamically uploaded memes from Convex storage. `getAllMemes()` in `state.js` concatenates both. Hardcoded memes are never voteable by `_id` — vote keys use `meme.name` (a slug string) for both static and Convex memes.
+**Dual meme source:** The collection merges 67 hardcoded memes from `js/data.js` (static files in `assets/images/`) with dynamically uploaded memes from Convex storage. `getAllMemes()` in `state.js` concatenates both. Hardcoded memes are never voteable by `_id`, vote keys use `meme.name` (a slug string) for both static and Convex memes.
 
 **Startup sequence:** `app.js` renders immediately from hardcoded data, then fires two async Convex fetches (`loadConvexMemes`, `loadVotes`) that re-render when they resolve. This means the UI is usable without Convex being available.
 
-**Convex client without build step:** `state.js` imports `ConvexHttpClient` from the ESM CDN and stores it as `export const convex`. All API calls use string-based function names via `export const api = { memes: { list: "memes:list", ... }, ... }` — no generated client types needed.
+**Convex client without build step:** `state.js` imports `ConvexHttpClient` from the ESM CDN and stores it as `export const convex`. All API calls use string-based function names via `export const api = { memes: { list: "memes:list", ... }, ... }`. No generated client types needed.
 
 **Vote dedup:** Votes are tied to a `visitorId` (UUID stored in `localStorage` under `meme-vault-visitor`), not to user accounts. Logged-in users and anonymous visitors all vote by `visitorId`. The `votes` table has `by_visitor_meme` index for fast per-visitor lookups.
 
@@ -33,10 +33,10 @@ Both `make dev` (terminal 1) and `make serve` (terminal 2) must run simultaneous
 ## Key State
 
 `state` object (in `state.js`):
-- `convexMemes` — raw results from `memes:list`, includes resolved storage URLs
-- `voteCounts` — `{ [memeKey: string]: number }` net score (upvotes − downvotes)
-- `myVotes` / `myDownvotes` — Sets of meme name slugs voted by this visitor
-- `activeCategory`, `sortBy` — filter/sort state driving `filterGrid()`
+- `convexMemes`: raw results from `memes:list`, includes resolved storage URLs
+- `voteCounts`: `{ [memeKey: string]: number }` net score (upvotes − downvotes)
+- `myVotes` / `myDownvotes`: Sets of meme name slugs voted by this visitor
+- `activeCategory`, `sortBy`: filter/sort state driving `filterGrid()`
 
 ## Convex Schema Notes
 
