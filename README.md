@@ -38,11 +38,11 @@ Meme Vault lets you browse a collection of memes, upload your own, and vote on f
 
 ## Features
 
-- **User auth** — register and login to track your uploads
-- **Meme upload** — add memes with categories; choose to post anonymously
-- **Upvote / downvote** — vote on any meme
-- **Search and filters** — find memes by name or narrow by category
-- **Random meme** — surface a random pick from the collection
+- **User auth**: register and login to track your uploads
+- **Meme upload**: add memes with categories; choose to post anonymously
+- **Upvote / downvote**: vote on any meme
+- **Search and filters**: find memes by name or narrow by category
+- **Random meme**: surface a random pick from the collection
 
 ## Running locally
 
@@ -66,7 +66,7 @@ Meme Vault lets you browse a collection of memes, upload your own, and vote on f
 
 4. Open `http://localhost:8000` in your browser.
 
-ES modules require an HTTP server — `file://` will not work.
+ES modules require an HTTP server: `file://` will not work.
 
 ## Tech
 
