@@ -209,10 +209,14 @@ export async function initMemesAuth() {
   }
   try {
     const { initNeorgonClerkConvex, neorgonDisplayLabel } = await import('./vendor/neorgon-auth.js');
-    await initNeorgonClerkConvex({
+    clerkInstance = await initNeorgonClerkConvex({
       convex,
       publishableKey: pk,
       signInHost: '#neorgon-signin-mount',
+      // This site's only host is the header dropdown, which is too small for the
+      // form and buried the username field. The other Clerk sites own a real
+      // dialog already, so they stay inline.
+      signInMode: 'modal',
       userButtonHost: '#neorgon-user-mount',
       signInProps: {
         appearance: { layout: { unsafe_disableDevelopmentModeWarnings: true } },
@@ -246,6 +250,24 @@ function renderAuthState() {
   if (uploadLoginPrompt) uploadLoginPrompt.style.display = loggedIn ? 'none' : 'block';
 }
 
+/** Set once Clerk is up, so the header button can open its sign-in dialog. */
+let clerkInstance = null;
+
+/**
+ * Signed out, the account button opens Clerk's own centred dialog. It used to
+ * mount the whole sign-in form inside the header dropdown, where it did not fit
+ * and where the username field ended up buried.
+ * Signed in, the dropdown is still the right place: it holds the user button
+ * and the legacy-account link.
+ */
+function openAuthUi() {
+  if (!getLoggedInUser() && clerkInstance?.neorgonOpenSignIn) {
+    clerkInstance.neorgonOpenSignIn();
+    return true;
+  }
+  return false;
+}
+
 function openAuthPanel() {
   authPanel.classList.add('open');
   authToggle.setAttribute('aria-expanded', 'true');
@@ -254,6 +276,7 @@ function openAuthPanel() {
 }
 
 authToggle.addEventListener('click', () => {
+  if (openAuthUi()) return;
   const open = authPanel.classList.toggle('open');
   authToggle.setAttribute('aria-expanded', open ? 'true' : 'false');
   if (open) {
@@ -262,7 +285,9 @@ authToggle.addEventListener('click', () => {
   }
 });
 
-document.getElementById('uploadSigninBtn')?.addEventListener('click', openAuthPanel);
+document.getElementById('uploadSigninBtn')?.addEventListener('click', () => {
+  if (!openAuthUi()) openAuthPanel();
+});
 
 document.getElementById('legacyLinkBtn')?.addEventListener('click', () => { void onLegacyLinkClick(); });
 
