@@ -1,6 +1,6 @@
 ---
 name: Meme Vault
-description: Neorgon dark tool shell with a rose/pink vote accent, a strict Content-Security-Policy, a nav+auth (Pattern C) header, and a masonry-ish meme grid with vote-burst micro-animations. All base suite tokens, plus a domain accent, a mono UI font, and Convex + Clerk backends.
+description: Neorgon dark tool shell with a rose/pink vote accent, a strict Content-Security-Policy, and a masonry-ish meme grid with vote-burst micro-animations. All base suite tokens, plus a domain accent and a mono UI font; Convex for data, sign-in through the fleet's Auth Kit.
 colors:
   bg: "#040714"
   surface-1: "rgba(255,255,255,0.03)"
@@ -65,7 +65,7 @@ components:
 
 ## Overview
 
-**This is the Neorgon suite shell with four deliberate deviations.** Read the root [DESIGN.md](../DESIGN.md) first; everything there holds unless noted. The deviations: a **rose/pink vote accent**, a **strict CSP** in the document head, a **nav+auth (Pattern C) header**, and a **meme grid with vote-burst micro-animations**. Backed by Convex (memes/votes/users) with Clerk auth.
+**This is the Neorgon suite shell with three deliberate deviations.** Read the root [DESIGN.md](../DESIGN.md) first; everything there holds unless noted. The deviations: a **rose/pink vote accent**, a **strict CSP** in the document head, and a **meme grid with vote-burst micro-animations**. Backed by Convex (memes/votes/users). Sign-in is not a deviation: it is the fleet's Auth Kit.
 
 Base tokens match the suite exactly (`#040714` void, glass surfaces, `#0063e5` action blue, Avenir Next, 68px gradient header).
 
@@ -77,19 +77,19 @@ Votes introduce one domain accent pair beyond suite blue: `.vote-score.positive 
 
 ### 2. Strict Content-Security-Policy
 
-Unlike the template (no CSP), the document head carries a hardened `<meta http-equiv="Content-Security-Policy">` plus `<meta http-equiv="X-Frame-Options" content="DENY">` and `frame-ancestors 'none'`. Allowlisted origins: Convex (`*.convex.cloud`), Clerk (`*.clerk.accounts.dev`, `api.clerk.com`, `img.clerk.com`, `clerk-telemetry.com`), Cloudflare Turnstile (`challenges.cloudflare.com`), the R2 asset bucket, and `esm.sh` for the lazy Convex client. Any new external origin (script, image, connect) must be added here or it is blocked. This is required because the site loads third-party auth and a serverless DB.
+Unlike the template (no CSP), the document head carries a hardened `<meta http-equiv="Content-Security-Policy">` plus `<meta http-equiv="X-Frame-Options" content="DENY">` and `frame-ancestors 'none'`. Allowlisted origins: Convex (`*.convex.cloud`), Clerk (`clerk.neorgon.com`, `accounts.neorgon.com`, `img.clerk.com`; the Auth Kit README's CSP table is the required set), Cloudflare Turnstile (`challenges.cloudflare.com`), the R2 asset bucket, and `esm.sh` for the lazy Convex client. Any new external origin (script, image, connect) must be added here or it is blocked. This is required because the site loads third-party auth and a serverless DB.
 
-### 3. Header Pattern C (nav + auth)
-
-Header carries a `<nav>` with `.nav-link--random` (random meme) and `.nav-link--upload` (toggles `.upload-panel`), then `.auth-toggle`, then `.header-home`. Layout: `margin-left:auto` on `<nav>`, `.header-home` gets `margin-left:5px`. Auth uses the Clerk modal pattern (shared with character-sheet), not the inline sheet.
-
-### 4. Meme grid + vote burst
+### 3. Meme grid + vote burst
 
 The core surface is `.meme-grid`: `grid-template-columns: repeat(auto-fill, minmax(220px, 1fr))`, cards with `aspect-ratio: 4/3` images, a staggered `.loaded` entrance, and `.vote-btn.burst` firing a `voteBurst` keyframe (`0.45s var(--ease-snap)`) on vote. An `.uploader-badge` attributes named uploads. `--font-mono` ('SF Mono'/'Fira Code') is defined for incidental monospace UI only, not headings (the One-Stack Rule still governs display/body type).
 
 ## Backend note
 
-Convex serverless (`convex/`: `users`, `memes`, `votes`, `schema.ts`) with the HTTP client lazy-loaded from `esm.sh` only when needed. Clerk handles auth identity. Uploads store to Convex storage with category + optional anonymous flag.
+Convex serverless (`convex/`: `users`, `memes`, `votes`, `schema.ts`) with the HTTP client lazy-loaded from `esm.sh` only when needed. Uploads store to Convex storage with category + optional anonymous flag.
+
+## Sign-in
+
+Clerk identity arrives through the Neorgon Auth Kit (`packages/neorgon-ui/auth/`). The header carries Random and Upload as ordinary `.header-actions`, then the kit's slot, then `.header-home`. The slot, the sign-in dialog and every style they use are kit-owned and themed from this site's `--accent`, so this file defines none of them.
 
 ## Do's and Don'ts
 
@@ -104,4 +104,5 @@ Convex serverless (`convex/`: `users`, `memes`, `votes`, `schema.ts`) with the H
 - **Don't** weaken the CSP to `unsafe-eval` or wildcard `*`; allowlist specific origins.
 - **Don't** promote the rose vote color to primary buttons; blue stays the action color.
 - **Don't** use the mono font for headings or body copy; it is incidental-UI only.
+- **Don't** build a sign-in panel, modal or `.auth-*` styles; sign-in belongs to the Auth Kit.
 - Everything in the root DESIGN.md "Don't" list still applies.
