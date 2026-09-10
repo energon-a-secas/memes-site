@@ -16,13 +16,6 @@ export const api = {
   memes: { list: "memes:list", getUploadUrl: "memes:getUploadUrl", saveMeme: "memes:saveMeme", deleteMeme: "memes:deleteMeme" },
   auth: { isAdmin: "auth:isAdmin" },
   votes: { getVotes: "votes:getVotes", toggleVote: "votes:toggleVote" },
-  migration: {
-    myAccountLink: "migration:myAccountLink",
-    linkLegacyAccount: "migration:linkLegacyAccount",
-    getUserSetting: "migration:getUserSetting",
-    setUserSetting: "migration:setUserSetting",
-    listUserSettings: "migration:listUserSettings",
-  },
 };
 
 // ── Visitor ID (persistent, used for vote dedup) ─────────────────────
@@ -57,13 +50,6 @@ export function setAuthSession(label, isAdmin) {
 export function getLoggedInUser() {
   return state.authLabel;
 }
-
-/** @deprecated */
-export function setLoggedInUser() {}
-export function getUserRole() {
-  return state.isConvexAdmin ? 'admin' : 'user';
-}
-export function setUserRole() {}
 
 // ── Derived data ─────────────────────────────────────────────────────
 

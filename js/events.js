@@ -3,6 +3,7 @@ import { MEMES } from './data.js';
 import { state, convex, api, visitorId, getAllMemes, getLoggedInUser, setAuthSession } from './state.js';
 import { showToast, formatName, copyMemeUrl, copyMemeImage, downloadMeme } from './utils.js';
 import { rebuildChips, filterGrid, renderRecentlyAdded } from './render.js';
+import { NeoAuth } from './neorgon-auth.js';
 
 // Respect prefers-reduced-motion for JS-driven smooth scrolling.
 const prefersReducedMotion = () =>
@@ -116,180 +117,49 @@ uploadToggle.addEventListener('click', () => {
   uploadToggle.setAttribute('aria-expanded', open ? 'true' : 'false');
 });
 
-// ── Auth (Clerk + Convex JWT) ────────────────────────────────────────
-const authToggle     = document.getElementById('authToggle');
-const authPanel      = document.getElementById('authPanel');
-const authGate       = document.getElementById('authGate');
-const authUserEl     = document.getElementById('authUser');
-const authUsernameEl = document.getElementById('authUsername');
-const uploadZone     = document.getElementById('uploadZone');
+// ── Auth ─────────────────────────────────────────────────────────────
+// The Neorgon Auth Kit owns the header slot, the sign-in dialog and the Convex
+// token. This file only listens, and gates the upload behind a sign-in.
+const uploadZone        = document.getElementById('uploadZone');
 const uploadLoginPrompt = document.getElementById('uploadLoginPrompt');
+const UPLOAD_REASON     = 'Sign in to upload your own memes.';
 
+// The delete button renders only for admins, and the grid is drawn before this
+// answers, so a change has to repaint or the button waits for an unrelated render.
 async function refreshAdminFlag() {
-  if (!getLoggedInUser()) {
-    setAuthSession(null, false);
-    return;
-  }
+  let isAdmin = false;
   try {
-    const isAd = await convex.query(api.auth.isAdmin, {});
-    setAuthSession(state.authLabel, !!isAd);
+    isAdmin = !!(await convex.query(api.auth.isAdmin, {}));
   } catch {
-    setAuthSession(state.authLabel, false);
+    isAdmin = false;
   }
-}
-
-async function refreshLegacyLinkSection() {
-  const section = document.getElementById('legacyLinkSection');
-  const msg = document.getElementById('legacyLinkMessage');
-  if (!section) return;
-  if (!getLoggedInUser()) {
-    section.hidden = true;
-    return;
-  }
-  try {
-    const link = await convex.query(api.migration.myAccountLink, {});
-    section.hidden = !!link;
-    if (msg) {
-      msg.hidden = true;
-      msg.textContent = '';
-      msg.classList.remove('legacy-link-message--err');
-    }
-  } catch {
-    section.hidden = true;
-  }
-}
-
-async function onLegacyLinkClick() {
-  const userEl = document.getElementById('legacyLinkUser');
-  const passEl = document.getElementById('legacyLinkPassword');
-  const msg = document.getElementById('legacyLinkMessage');
-  const section = document.getElementById('legacyLinkSection');
-  const username = userEl?.value?.trim() || '';
-  const password = passEl?.value || '';
-  if (!username || !password) {
-    if (msg) {
-      msg.textContent = 'Enter legacy username and password.';
-      msg.classList.add('legacy-link-message--err');
-      msg.hidden = false;
-    }
-    return;
-  }
-  try {
-    const res = await convex.mutation(api.migration.linkLegacyAccount, { username, password });
-    if (res.ok) {
-      if (msg) {
-        msg.textContent = `Linked @${res.legacyUsername}.`;
-        msg.classList.remove('legacy-link-message--err');
-        msg.hidden = false;
-      }
-      if (userEl) userEl.value = '';
-      if (passEl) passEl.value = '';
-      if (section) section.hidden = true;
-      showToast('Legacy account linked');
-    } else if (msg) {
-      msg.textContent = res.error || 'Link failed';
-      msg.classList.add('legacy-link-message--err');
-      msg.hidden = false;
-    }
-  } catch {
-    if (msg) {
-      msg.textContent = 'Link failed. Try again.';
-      msg.classList.add('legacy-link-message--err');
-      msg.hidden = false;
-    }
-  }
-}
-
-/** Call from app.js before first render that depends on auth. */
-export async function initMemesAuth() {
-  const pk = document.querySelector('meta[name="clerk-publishable-key"]')?.content?.trim();
-  if (!pk) {
-    console.warn('Meme Vault: add clerk-publishable-key meta for uploads.');
-    return;
-  }
-  try {
-    const { initNeorgonClerkConvex, neorgonDisplayLabel } = await import('./vendor/neorgon-auth.js');
-    clerkInstance = await initNeorgonClerkConvex({
-      convex,
-      publishableKey: pk,
-      signInHost: '#neorgon-signin-mount',
-      // This site's only host is the header dropdown, which is too small for the
-      // form and buried the username field. The other Clerk sites own a real
-      // dialog already, so they stay inline.
-      signInMode: 'modal',
-      userButtonHost: '#neorgon-user-mount',
-      signInProps: {
-        appearance: { layout: { unsafe_disableDevelopmentModeWarnings: true } },
-      },
-      onSession: ({ clerk, hasSession }) => {
-        if (hasSession) {
-          setAuthSession(neorgonDisplayLabel(clerk), false);
-          void refreshAdminFlag();
-          void refreshLegacyLinkSection();
-        } else {
-          setAuthSession(null, false);
-        }
-        renderAuthState();
-        filterGrid();
-        renderRecentlyAdded();
-      },
-    });
-  } catch (e) {
-    console.warn('Meme Vault: Clerk init failed', e);
-  }
+  if (!getLoggedInUser() || isAdmin === state.isConvexAdmin) return;
+  setAuthSession(state.authLabel, isAdmin);
+  filterGrid();
+  renderRecentlyAdded();
 }
 
 function renderAuthState() {
   const loggedIn = !!getLoggedInUser();
-  if (!authGate || !authUserEl) return;
-  authGate.hidden = loggedIn;
-  authUserEl.hidden = !loggedIn;
-  authToggle.classList.toggle('logged-in', loggedIn);
-  if (loggedIn && authUsernameEl) authUsernameEl.textContent = state.authLabel || '';
   if (uploadZone) uploadZone.style.display = loggedIn ? 'block' : 'none';
   if (uploadLoginPrompt) uploadLoginPrompt.style.display = loggedIn ? 'none' : 'block';
 }
 
-/** Set once Clerk is up, so the header button can open its sign-in dialog. */
-let clerkInstance = null;
-
-/**
- * Signed out, the account button opens Clerk's own centred dialog. It used to
- * mount the whole sign-in form inside the header dropdown, where it did not fit
- * and where the username field ended up buried.
- * Signed in, the dropdown is still the right place: it holds the user button
- * and the legacy-account link.
- */
-function openAuthUi() {
-  if (!getLoggedInUser() && clerkInstance?.neorgonOpenSignIn) {
-    clerkInstance.neorgonOpenSignIn();
-    return true;
-  }
-  return false;
+/** Called once from app.js. */
+export async function initMemesAuth() {
+  NeoAuth.onChange(({ signedIn, label }) => {
+    setAuthSession(signedIn ? label : null, false);
+    renderAuthState();
+    filterGrid();
+    renderRecentlyAdded();
+    if (signedIn) void refreshAdminFlag();
+  });
+  await NeoAuth.start({ convex });
 }
 
-function openAuthPanel() {
-  authPanel.classList.add('open');
-  authToggle.setAttribute('aria-expanded', 'true');
-  authPanel.scrollIntoView({ behavior: scrollBehavior(), block: 'start' });
-  if (getLoggedInUser()) void refreshLegacyLinkSection();
-}
-
-authToggle.addEventListener('click', () => {
-  if (openAuthUi()) return;
-  const open = authPanel.classList.toggle('open');
-  authToggle.setAttribute('aria-expanded', open ? 'true' : 'false');
-  if (open) {
-    authPanel.scrollIntoView({ behavior: scrollBehavior(), block: 'start' });
-    if (getLoggedInUser()) void refreshLegacyLinkSection();
-  }
+document.getElementById('uploadSigninBtn')?.addEventListener('click', (event) => {
+  void NeoAuth.requireSignIn({ reason: UPLOAD_REASON, invoker: event.currentTarget });
 });
-
-document.getElementById('uploadSigninBtn')?.addEventListener('click', () => {
-  if (!openAuthUi()) openAuthPanel();
-});
-
-document.getElementById('legacyLinkBtn')?.addEventListener('click', () => { void onLegacyLinkClick(); });
 
 // ── Drag-and-drop / file picker ──────────────────────────────────────
 const dropZone       = document.getElementById('dropZone');
@@ -332,7 +202,7 @@ uploadSubmit.addEventListener('click', async () => {
   const name = memeNameInput.value.trim();
   if (!name) { showToast('Add a name first'); return; }
 
-  if (!getLoggedInUser()) { showToast('Please sign in first'); return; }
+  if (!getLoggedInUser() && !(await NeoAuth.requireSignIn({ reason: UPLOAD_REASON }))) return;
 
   uploadSubmit.disabled = true;
   uploadSubmit.textContent = 'Uploading\u2026';
