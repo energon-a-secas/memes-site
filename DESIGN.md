@@ -1,108 +1,47 @@
 ---
 name: Meme Vault
-description: Neorgon dark tool shell with a rose/pink vote accent, a strict Content-Security-Policy, and a masonry-ish meme grid with vote-burst micro-animations. All base suite tokens, plus a domain accent and a mono UI font; Convex for data, sign-in through the fleet's Auth Kit.
-colors:
-  bg: "#040714"
-  surface-1: "rgba(255,255,255,0.03)"
-  surface-2: "rgba(255,255,255,0.06)"
-  border-subtle: "rgba(255,255,255,0.07)"
-  border: "rgba(255,255,255,0.1)"
-  border-strong: "rgba(255,255,255,0.22)"
-  text-primary: "#f9f9f9"
-  text-secondary: "#cacaca"
-  text-muted: "rgba(255,255,255,0.55)"
-  accent: "#0063e5"
-  accent-bright: "#0080ff"
-  accent-dim: "rgba(0,99,229,0.12)"
-  vote-positive: "#f472b6"
-  vote-negative: "#f87171"
-typography:
-  display:
-    fontFamily: "'Avenir Next', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
-    fontSize: "1.5rem"
-    fontWeight: 600
-    lineHeight: 1.2
-    letterSpacing: "0.02em"
-  body:
-    fontFamily: "'Avenir Next', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
-    fontSize: "0.875rem"
-    fontWeight: 400
-    lineHeight: 1.45
-    letterSpacing: "normal"
-  mono:
-    fontFamily: "'SF Mono', 'Fira Code', monospace"
-    fontSize: "0.875rem"
-    fontWeight: 400
-    lineHeight: 1.4
-    letterSpacing: "normal"
-rounded:
-  sm: "6px"
-  md: "10px"
-  lg: "15px"
-spacing:
-  s1: "4px"
-  s2: "8px"
-  s3: "12px"
-  s4: "16px"
-  s6: "24px"
-  s8: "32px"
-components:
-  meme-card:
-    backgroundColor: "{colors.surface-1}"
-    textColor: "{colors.text-primary}"
-    rounded: "{rounded.lg}"
-  vote-btn:
-    backgroundColor: "transparent"
-    textColor: "{colors.text-secondary}"
-    rounded: "{rounded.sm}"
-  nav-link:
-    backgroundColor: "transparent"
-    textColor: "rgba(255,255,255,0.92)"
-    rounded: "{rounded.sm}"
+description: A shared meme collection with a dark Neorgon shell, blue organization controls, and rose voting feedback.
 ---
 
 # Design System: Meme Vault
 
-## Overview
+## Context
 
-**This is the Neorgon suite shell with three deliberate deviations.** Read the root [DESIGN.md](../DESIGN.md) first; everything there holds unless noted. The deviations: a **rose/pink vote accent**, a **strict CSP** in the document head, and a **meme grid with vote-burst micro-animations**. Backed by Convex (memes/votes/users). Sign-in is not a deviation: it is the fleet's Auth Kit.
+A teammate is browsing the vault beside a dark chat window, looking for a reaction to send without breaking their flow. Keep the established dark shell and let the images carry the color. Use restrained blue for actions and selections, with rose reserved for votes.
 
-Base tokens match the suite exactly (`#040714` void, glass surfaces, `#0063e5` action blue, Avenir Next, 68px gradient header).
+The Neorgon header, themes, footer, and Auth Kit are vendored suite components. Do not edit them locally. Keep their slots, sign-in behavior, and theme controls intact.
 
-## Deviations from the suite baseline
+## Tokens
 
-### 1. Vote accent (rose/pink)
+The application tokens live in `css/style.css`. Neutrals use OKLCH with a slight cool tint: background at 15% lightness, surfaces at 19% and 23%, primary text at 96%, secondary text at 81%, and muted text at 68%. Blue action backgrounds use 49% lightness; readable action text uses a lighter blue. Rose and red indicate positive and negative vote states, accompanied by numeric scores and pressed states.
 
-Votes introduce one domain accent pair beyond suite blue: `.vote-score.positive #f472b6` (pink) and `.vote-score.negative #f87171` (red). Downvote hover/voted states use the red. Blue `#0063e5` still owns primary buttons and links; the rose/pink is scoped to the voting affordance only. Sanctioned use of the One-Accent allowance.
+Use the suite's sans serif stack for body and headings. Keep headings at 2rem on desktop and 1.5rem on small screens, section titles at 1.125rem, body at .875rem, and secondary controls at .75rem. Use 6px control corners and 10px card corners.
 
-### 2. Strict Content-Security-Policy
+## Layout
 
-Unlike the template (no CSP), the document head carries a hardened `<meta http-equiv="Content-Security-Policy">` plus `<meta http-equiv="X-Frame-Options" content="DENY">` and `frame-ancestors 'none'`. Allowlisted origins: Convex (`*.convex.cloud`), Clerk (`clerk.neorgon.com`, `accounts.neorgon.com`, `img.clerk.com`; the Auth Kit README's CSP table is the required set), Cloudflare Turnstile (`challenges.cloudflare.com`), the R2 asset bucket, and `esm.sh` for the lazy Convex client. Any new external origin (script, image, connect) must be added here or it is blocked. This is required because the site loads third-party auth and a serverless DB.
+- The introduction pairs a short collection heading with a compact daily pick.
+- Desktop uses a 204px category and label sidebar beside the search, results and image grid.
+- Below 760px, the sidebar becomes an expandable filter section and the gallery uses two columns.
+- Category buttons show readable names and counts. Labels are independent, combinable filters. Active filters appear above the results with individual remove actions and Clear all.
+- Cards show complete images with `object-fit: contain`, a name, category, labels and vote controls. The Organize action opens the existing viewer. Touch devices show image actions below the image so controls do not cover its caption.
+- The viewer pairs the image with metadata and actions on desktop, stacking them on smaller screens. Organization is a progressive form within the viewer.
 
-### 3. Meme grid + vote burst
+## Organization controls
 
-The core surface is `.meme-grid`: `grid-template-columns: repeat(auto-fill, minmax(220px, 1fr))`, cards with `aspect-ratio: 4/3` images, a staggered `.loaded` entrance, and `.vote-btn.burst` firing a `voteBurst` keyframe (`0.45s var(--ease-snap)`) on vote. An `.uploader-badge` attributes named uploads. `--font-mono` ('SF Mono'/'Fira Code') is defined for incidental monospace UI only, not headings (the One-Stack Rule still governs display/body type).
+Each meme has one category and up to eight labels. Both the upload form and viewer share the same label editor: Enter or comma adds a label; a remove button deletes it; Backspace removes the last label when the input is empty. Suggestions come from labels already in use. Saving commits any pending text.
 
-## Backend note
+Category inputs suggest existing categories and accept custom ones. Friendly built-in names normalize to existing keys. Labels are case-insensitive and deduplicated. New categories join the navigation as soon as a meme is saved to them.
 
-Convex serverless (`convex/`: `users`, `memes`, `votes`, `schema.ts`) with the HTTP client lazy-loaded from `esm.sh` only when needed. Uploads store to Convex storage with category + optional anonymous flag.
+Shared edits require ownership or administrator rights, enforced by Convex. Signed-out visitors see a sign-in action; signed-in visitors without permission see a reason. Failed saves keep the draft and show an inline retry message.
 
-## Sign-in
+## Accessibility and motion
 
-Clerk identity arrives through the Neorgon Auth Kit (`packages/neorgon-ui/auth/`). The header carries Random and Upload as ordinary `.header-actions`, then the kit's slot, then `.header-home`. The slot, the sign-in dialog and every style they use are kit-owned and themed from this site's `--accent`, so this file defines none of them.
+Use visible labels, named icon buttons, pressed states for filters and votes, and live text for result counts and errors. The closed viewer is inert. When it opens, background landmarks become inert and focus stays inside; closing returns focus to the triggering control or search if that control has been replaced. Arrow keys navigate memes only outside the organization form.
 
-## Do's and Don'ts
+Transitions communicate hover, focus and visibility, with no staggered card entrance. Honor reduced motion for both CSS transitions and JavaScript scrolling. Search is also available through the `/` shortcut outside text fields.
 
-### Do
+## Security and deployment
 
-- **Do** keep base suite chrome untouched; layer the vote accent and grid on top.
-- **Do** add any new external origin to the CSP allowlist (and to `neorgon-site/CLAUDE.md`'s analytics note pattern if analytics are added).
-- **Do** keep browse/search/download working without auth.
+Keep the document's strict Content Security Policy and existing origin allowlist. Render user-created categories and labels as text nodes. Sign-in remains exclusively owned by the Neorgon Auth Kit.
 
-### Don't
-
-- **Don't** weaken the CSP to `unsafe-eval` or wildcard `*`; allowlist specific origins.
-- **Don't** promote the rose vote color to primary buttons; blue stays the action color.
-- **Don't** use the mono font for headings or body copy; it is incidental-UI only.
-- **Don't** build a sign-in panel, modal or `.auth-*` styles; sign-in belongs to the Auth Kit.
-- Everything in the root DESIGN.md "Don't" list still applies.
+The optional `memes.labels` field and the `memeOrganization` table support shared organization. Deploy the Convex schema and functions before the frontend. Bundled image paths, stable meme names and vote identities are unchanged.

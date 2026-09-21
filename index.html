@@ -68,7 +68,7 @@
         <img src="energon-classic-logo.png" class="header-logo-img" alt="">
         <div class="header-title-wrap">
         <h1>Meme Vault</h1>
-        <div class="header-subtitle" id="subtitle">67 internal jokes</div>
+        <div class="header-subtitle" id="subtitle">Your shared joke drawer</div>
       
         </div>
       </a>
@@ -101,7 +101,7 @@
 
     <!-- Upload panel -->
     <div class="upload-panel" id="uploadPanel">
-      <h3>Upload Meme</h3>
+      <div class="panel-heading"><div><h2>Add to the vault</h2><p class="field-hint">A good meme deserves good company.</p></div><button type="button" class="text-button" id="uploadClose" aria-label="Close upload panel">Close ×</button></div>
       <!-- Login prompt (shown when not logged in) -->
       <div id="uploadLoginPrompt">
         <p class="upload-login-msg">Sign in to upload your own memes.</p>
@@ -109,90 +109,70 @@
       </div>
       <!-- Upload zone (shown when logged in) -->
       <div id="uploadZone" style="display:none">
-        <div class="drop-zone" id="dropZone">Drop an image here, or click to browse</div>
+        <button type="button" class="drop-zone" id="dropZone">Drop an image here, or click to browse</button><p class="field-hint upload-formats">PNG, JPG, GIF or WebP · Up to 10 MB</p>
         <input type="file" id="fileInput" accept="image/png,image/jpeg,image/gif,image/webp" style="display:none">
         <div id="uploadPreview" style="display:none">
           <div class="upload-preview">
             <img id="previewImg" src="" alt="preview">
             <div class="upload-fields">
-              <input type="text" id="memeNameInput" placeholder="Meme name">
-              <select id="memeCatSelect">
-                <option value="general">general</option>
-                <option value="anime">anime</option>
-                <option value="country">country</option>
-                <option value="games">games</option>
-                <option value="mood">mood</option>
-                <option value="movie-reference">movie-reference</option>
-                <option value="other-references">other-references</option>
-                <option value="series">series</option>
-                <option value="simpsons">simpsons</option>
-                <option value="talent">talent</option>
-                <option value="templates">templates</option>
-              </select>
+              <label for="memeNameInput">Meme name</label>
+              <input type="text" id="memeNameInput" placeholder="Give it a memorable name" maxlength="120">
+              <label for="memeCatSelect">Category</label>
+              <input type="text" id="memeCatSelect" list="categoryOptions" value="general" maxlength="40" placeholder="Choose or create a category" aria-describedby="uploadCategoryHint">
+              <p class="field-hint" id="uploadCategoryHint">Choose an existing category or type a new one.</p>
+              <label for="uploadLabelsInput">Labels <span class="optional">(optional)</span></label>
+              <div id="uploadLabels"></div>
               <label class="anon-label">
                 <input type="checkbox" id="anonCheck" checked> Post anonymously
               </label>
             </div>
           </div>
-          <button class="upload-submit-btn" id="uploadSubmit">Upload Meme</button>
+          <p id="uploadError" class="field-error" role="alert"></p><button class="upload-submit-btn" id="uploadSubmit">Upload meme</button>
         </div>
       </div>
     </div>
 
-    <!-- Meme of the Day -->
-    <div class="motd-banner" id="motdBanner" style="display:none">
-      <div class="motd-label">Meme of the Day</div>
-      <div class="motd-content">
-        <img class="motd-img" id="motdImg" src="" alt="">
-        <div class="motd-info">
-          <div class="motd-name" id="motdName"></div>
-          <div class="motd-actions">
-            <button class="motd-btn" id="motdView" title="View full size">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-              View
-            </button>
-            <button class="motd-btn" id="motdCopy" title="Copy image">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
-              Copy
-            </button>
-          </div>
+    <div class="vault-intro">
+      <div><p class="eyebrow">THE SHARED COLLECTION</p><h2>A meme for every moment.</h2><p>Find it. Send it. Make someone’s day.</p></div>
+      <div class="motd-banner" id="motdBanner" style="display:none">
+        <img class="motd-img" id="motdImg" alt="">
+        <div class="motd-info"><span class="motd-label">Today’s pick</span><span class="motd-name" id="motdName"></span><div class="motd-actions"><button class="motd-btn" id="motdView">Take a look ↗</button><button class="motd-btn" id="motdCopy">Copy</button></div></div>
+      </div>
+    </div>
+
+    <div class="library-layout">
+      <aside class="library-sidebar" aria-label="Filter collection">
+        <div class="sidebar-heading"><h2>Browse the vault</h2><button class="text-button mobile-filter-toggle" id="filterToggle" type="button" aria-expanded="false" aria-controls="filterContents">Filters +</button></div>
+        <div class="filter-contents" id="filterContents">
+          <h3 class="filter-heading">Categories</h3>
+          <div class="chips" id="chips" role="group" aria-label="Categories"></div>
+          <div class="labels-heading"><h3 class="filter-heading">Labels</h3><span class="label-total" id="labelTotal"></span></div>
+          <input type="search" class="label-search" id="labelSearch" placeholder="Find a label…" aria-label="Find a label" hidden>
+          <div class="label-filters" id="labelFilters" role="group" aria-label="Labels"></div>
+          <p class="sidebar-note">One category for the big picture.<br>Labels for the little details.</p>
         </div>
-      </div>
+      </aside>
+
+      <section class="library-content" aria-label="Meme collection">
+        <div class="search-wrap">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+          <input id="searchInput" type="search" placeholder="Search memes, categories, labels…" aria-label="Search memes, categories and labels" autocomplete="off">
+          <kbd class="search-shortcut" aria-hidden="true">/</kbd>
+        </div>
+        <div class="toolbar-row">
+          <div><h2 class="collection-title" id="collectionTitle">All memes</h2><div class="result-info" id="resultInfo" role="status" aria-live="polite" aria-atomic="true"></div></div>
+          <div class="sort-controls"><label class="sort-label" for="sortSelect">Sort by</label><select id="sortSelect" class="sort-select"><option value="recent" selected>Recently added</option><option value="votes">Most voted</option><option value="name">Name, A–Z</option><option value="default">Collection order</option></select></div>
+        </div>
+        <div class="active-filters" id="activeFilters" aria-label="Active filters" hidden></div>
+        <div class="meme-grid" id="memeGrid" role="list" aria-label="Memes"></div>
+      </section>
     </div>
-
-    <div class="search-wrap">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
-      </svg>
-      <input id="searchInput" type="text" placeholder="Search 67 internal jokes..." autocomplete="off" spellcheck="false">
-    </div>
-
-    <!-- Recently added (Convex uploads) -->
-    <div class="recent-section" id="recentSection" style="display:none">
-      <h2 class="section-heading">Recently Added</h2>
-      <div class="recent-row" id="recentRow"></div>
-    </div>
-
-    <div class="chips" id="chips"></div>
-
-    <div class="toolbar-row">
-      <div class="result-info" id="resultInfo" role="status" aria-live="polite" aria-atomic="true"></div>
-      <div class="sort-controls">
-        <label class="sort-label" for="sortSelect">Sort:</label>
-        <select id="sortSelect" class="sort-select">
-          <option value="recent" selected>Recently Added</option>
-          <option value="votes">Most Voted</option>
-          <option value="default">Default</option>
-        </select>
-      </div>
-    </div>
-
-    <div class="meme-grid" id="memeGrid" role="list" aria-label="Memes"></div>
+    <datalist id="categoryOptions"></datalist>
 
   </main>
 
   <!-- Lightbox -->
-  <div class="lightbox" id="lightbox" role="dialog" aria-modal="true" aria-label="Meme viewer" aria-hidden="true">
+  <div class="lightbox" id="lightbox" role="dialog" aria-modal="true" aria-label="Meme viewer" aria-hidden="true" inert>
     <button class="lightbox-close" id="lightboxClose" aria-label="Close">&times;</button>
     <button class="lightbox-nav lightbox-prev" id="lbPrev" aria-label="Previous">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
@@ -201,10 +181,11 @@
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
     </button>
     <div class="lightbox-content">
-      <img id="lightboxImg" src="" alt="">
+      <div class="lightbox-image-area"><img id="lightboxImg" alt=""></div>
       <div class="lightbox-info">
         <div class="lightbox-name" id="lightboxName"></div>
         <div class="lightbox-counter" id="lightboxCounter"></div>
+        <div class="lightbox-taxonomy" id="lightboxTaxonomy"></div>
         <div class="lightbox-actions">
           <button class="lightbox-btn" id="lbCopyUrl" title="Copy URL">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>
@@ -218,6 +199,21 @@
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
             <span>Download</span>
           </button>
+        </div>
+        <div class="organize-section">
+          <button type="button" class="organize-toggle" id="organizeToggle" aria-expanded="false" aria-controls="organizeForm">Organize meme <span aria-hidden="true">＋</span></button>
+          <p class="field-hint" id="organizeHint">Add labels and choose a category.</p>
+          <form id="organizeForm" hidden>
+            <fieldset id="organizeFields">
+              <label for="organizeCategory">Category</label>
+              <input type="text" id="organizeCategory" list="categoryOptions" maxlength="40" required aria-describedby="organizeCategoryHint">
+              <p class="field-hint" id="organizeCategoryHint">Choose an existing category or type a new one.</p>
+              <label for="organizeLabelsInput">Labels</label>
+              <div id="organizeLabels"></div>
+              <p class="field-error" id="organizeError" role="alert"></p>
+              <div class="organize-actions"><button type="submit" class="primary-button" id="organizeSave">Save changes</button><button type="button" class="text-button" id="organizeCancel">Cancel</button></div>
+            </fieldset>
+          </form>
         </div>
       </div>
     </div>

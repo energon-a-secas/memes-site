@@ -39,9 +39,10 @@ Meme Vault lets you browse a collection of memes, upload your own, and vote on f
 ## Features
 
 - **User auth**: register and login to track your uploads
-- **Meme upload**: add memes with categories; choose to post anonymously
+- **Meme upload**: choose or create a category, add up to eight labels, and choose to post anonymously
+- **Organize memes**: owners can update categories and labels on their uploads; admins can organize the entire vault, including bundled images
 - **Upvote / downvote**: vote on any meme
-- **Search and filters**: find memes by name or narrow by category
+- **Search and filters**: search names, categories and labels together; combine category filters with multiple labels
 - **Random meme**: surface a random pick from the collection
 
 ## Running locally
@@ -67,6 +68,25 @@ Meme Vault lets you browse a collection of memes, upload your own, and vote on f
 4. Open `http://localhost:8000` in your browser.
 
 ES modules require an HTTP server: `file://` will not work.
+
+## Labels and categories
+
+Open **Organize** on a card to edit its category and labels. Choose a suggested category or type a new one. Add labels with Enter or a comma, and remove a label with its × button. Changes are shared across the vault. Category names and labels are normalized and deduplicated; labels are limited to 32 characters each.
+
+Uploaded memes keep their labels in the `memes` table. Bundled images keep overrides in `memeOrganization`, keyed by their stable name; image files and vote keys stay the same. Missing labels on older uploads are treated as an empty list. Older uploads without an owner can be organized by an admin.
+
+Deploy the Convex functions and schema **before publishing the updated frontend** with `npx convex deploy`, using an account with access to the configured project. The new `memes:organization` query and `memes:organize` mutation are required for shared organization. The new upload `labels` argument is optional, so older frontend clients remain compatible.
+
+## Verification
+
+```bash
+npm run typecheck
+npm test
+npx playwright install chromium
+npm run test:ui
+```
+
+Unit tests exercise filtering, metadata validation, and the actual Convex handlers with an isolated database fixture. Browser tests cover editing, uploads, failed-save recovery, permission states, keyboard use and mobile layout. They intercept authentication and backend calls and never write to the live vault. The production Clerk key does not support signing in on localhost.
 
 ## Tech
 

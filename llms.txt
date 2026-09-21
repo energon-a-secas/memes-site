@@ -4,7 +4,7 @@
 
 - Live: https://memes.neorgon.com/
 - Part of the Neorgon tool suite (free, no signup, runs in your browser): https://neorgon.com/
-- Keywords: memes, vote, convex, auth, upload
+- Keywords: memes, vote, convex, auth, clerk, upload
 
 ## More Neorgon tools
 

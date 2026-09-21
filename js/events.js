@@ -1,8 +1,10 @@
 // ── Event handlers ───────────────────────────────────────────────────
 import { MEMES } from './data.js';
-import { state, convex, api, visitorId, getAllMemes, getLoggedInUser, setAuthSession } from './state.js';
+import { state, convex, api, visitorId, getAllMemes, getLoggedInUser, setAuthSession, canOrganize } from './state.js';
 import { showToast, formatName, copyMemeUrl, copyMemeImage, downloadMeme } from './utils.js';
-import { rebuildChips, filterGrid, renderRecentlyAdded } from './render.js';
+import { rebuildChips, filterGrid, renderLabelFilters, getFilteredMemes, allLabels } from './render.js';
+import { categoryName, validateOrganization } from './organization.js';
+import { createLabelInput } from './label-input.js';
 import { NeoAuth } from './neorgon-auth.js';
 
 // Respect prefers-reduced-motion for JS-driven smooth scrolling.
@@ -13,6 +15,18 @@ const scrollBehavior = () => (prefersReducedMotion() ? 'auto' : 'smooth');
 // ── Search input ─────────────────────────────────────────────────────
 const searchInput = document.getElementById('searchInput');
 searchInput.addEventListener('input', filterGrid);
+document.getElementById('labelSearch').addEventListener('input', renderLabelFilters);
+document.getElementById('filterToggle').addEventListener('click', event => {
+  const open = document.getElementById('filterContents').classList.toggle('expanded');
+  event.currentTarget.setAttribute('aria-expanded', String(open));
+  event.currentTarget.textContent = open ? 'Filters −' : 'Filters +';
+});
+document.addEventListener('keydown', event => {
+  if (event.key === '/' && !/INPUT|TEXTAREA|SELECT/.test(event.target.tagName) && !event.target.isContentEditable && !document.getElementById('lightbox').classList.contains('open')) {
+    event.preventDefault();
+    searchInput.focus();
+  }
+});
 
 // ── Sort control ─────────────────────────────────────────────────────
 const sortSelect = document.getElementById('sortSelect');
@@ -26,12 +40,23 @@ export async function loadConvexMemes({ render = true } = {}) {
   try {
     const results = await convex.query(api.memes.list);
     state.convexMemes = results;
-    if (render) { rebuildChips(); filterGrid(); renderRecentlyAdded(); }
+    if (render) { rebuildChips(); filterGrid(); }
     const total = MEMES.length + state.convexMemes.length;
     document.getElementById('subtitle').textContent = `${total} internal jokes`;
-    searchInput.placeholder = `Search ${total} memes\u2026`;
+
   } catch (e) {
     console.warn('Convex not available:', e.message);
+  }
+}
+
+export async function loadOrganization() {
+  try {
+    const rows = await convex.query(api.memes.organization, {});
+    state.organization = Object.fromEntries(rows.map(row => [row.memeKey, { category: row.category, labels: row.labels }]));
+    rebuildChips();
+    filterGrid();
+  } catch (error) {
+    console.warn('Organization not available:', error.message);
   }
 }
 
@@ -42,7 +67,7 @@ export async function loadVotes({ render = true } = {}) {
     state.voteCounts = counts;
     state.myVotes = new Set(upvoted);
     state.myDownvotes = new Set(downvoted);
-    if (render) { filterGrid(); renderRecentlyAdded(); }
+    if (render) { filterGrid(); }
   } catch (e) {
     console.warn('Votes not available:', e.message);
   }
@@ -53,7 +78,7 @@ export async function handleVoteClick(memeKey, direction = 1) {
   try {
     const { action, direction: dir } = await convex.mutation(api.votes.toggleVote, { memeKey, visitorId, direction });
 
-    // Optimistic local update
+    // Update local counts after the server accepts the vote.
     if (action === 'added') {
       state.voteCounts[memeKey] = (state.voteCounts[memeKey] || 0) + dir;
       if (dir > 0) { state.myVotes.add(memeKey); state.myDownvotes.delete(memeKey); }
@@ -72,23 +97,10 @@ export async function handleVoteClick(memeKey, direction = 1) {
       showToast('Vote removed');
     }
 
-    // Burst animation on the button that was just activated (up or down)
-    if (action === 'added' || action === 'switched') {
-      const sel = dir > 0 ? '.vote-btn:not(.downvote)' : '.vote-btn.downvote';
-      document.querySelectorAll(sel).forEach(btn => {
-        const card = btn.closest('.meme-card');
-        if (card && card.querySelector('.meme-name')?.textContent === formatName(memeKey)) {
-          btn.classList.remove('burst');
-          void btn.offsetWidth;
-          btn.classList.add('burst');
-        }
-      });
-    }
-
     filterGrid();
-    renderRecentlyAdded();
+
   } catch (e) {
-    showToast('Vote failed. Check Convex config');
+    showToast('Could not save your vote. Please try again.');
   }
 }
 
@@ -114,7 +126,14 @@ const uploadToggle = document.getElementById('uploadToggle');
 const uploadPanel  = document.getElementById('uploadPanel');
 uploadToggle.addEventListener('click', () => {
   const open = uploadPanel.classList.toggle('open');
+  if (open) uploadPanel.scrollIntoView({ behavior: scrollBehavior(), block: 'start' });
   uploadToggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+});
+
+document.getElementById('uploadClose').addEventListener('click', () => {
+  uploadPanel.classList.remove('open');
+  uploadToggle.setAttribute('aria-expanded', 'false');
+  uploadToggle.focus();
 });
 
 // ── Auth ─────────────────────────────────────────────────────────────
@@ -127,16 +146,18 @@ const UPLOAD_REASON     = 'Sign in to upload your own memes.';
 // The delete button renders only for admins, and the grid is drawn before this
 // answers, so a change has to repaint or the button waits for an unrelated render.
 async function refreshAdminFlag() {
+  const subject = state.authSubject;
   let isAdmin = false;
   try {
     isAdmin = !!(await convex.query(api.auth.isAdmin, {}));
   } catch {
     isAdmin = false;
   }
-  if (!getLoggedInUser() || isAdmin === state.isConvexAdmin) return;
+  if (!getLoggedInUser() || subject !== state.authSubject || isAdmin === state.isConvexAdmin) return;
   setAuthSession(state.authLabel, isAdmin);
+  if (currentMeme) renderLightboxOrganization();
   filterGrid();
-  renderRecentlyAdded();
+
 }
 
 function renderAuthState() {
@@ -147,11 +168,12 @@ function renderAuthState() {
 
 /** Called once from app.js. */
 export async function initMemesAuth() {
-  NeoAuth.onChange(({ signedIn, label }) => {
-    setAuthSession(signedIn ? label : null, false);
+  NeoAuth.onChange(({ signedIn, label, userId }) => {
+    setAuthSession(signedIn ? label : null, false, userId);
+    if (currentMeme) renderLightboxOrganization();
     renderAuthState();
     filterGrid();
-    renderRecentlyAdded();
+
     if (signedIn) void refreshAdminFlag();
   });
   await NeoAuth.start({ convex });
@@ -169,6 +191,9 @@ const previewImg     = document.getElementById('previewImg');
 const memeNameInput  = document.getElementById('memeNameInput');
 const memeCatSelect  = document.getElementById('memeCatSelect');
 const uploadSubmit   = document.getElementById('uploadSubmit');
+const uploadLabels = createLabelInput(document.getElementById('uploadLabels'), { id: 'uploadLabelsInput', suggestions: allLabels });
+const uploadError = document.getElementById('uploadError');
+let previewUrl = null;
 
 dropZone.addEventListener('click', () => fileInput.click());
 dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('dragover'); });
@@ -184,12 +209,18 @@ fileInput.addEventListener('change', () => {
 });
 
 function handleFileSelect(file) {
-  if (!file.type.startsWith('image/')) {
-    showToast('Only image files allowed');
+  if (uploadSubmit.disabled) return;
+  if (!['image/png', 'image/jpeg', 'image/gif', 'image/webp'].includes(file.type)) {
+    showToast('Choose a PNG, JPG, GIF or WebP image.');
     return;
   }
+  if (file.size > 10 * 1024 * 1024) { showToast('Choose an image smaller than 10 MB.'); return; }
+  if (previewUrl) URL.revokeObjectURL(previewUrl);
   state.selectedFile = file;
-  previewImg.src = URL.createObjectURL(file);
+  previewUrl = URL.createObjectURL(file);
+  previewImg.src = previewUrl;
+  uploadError.textContent = '';
+  uploadLabels.setLabels();
   const baseName = file.name.replace(/\.[^.]+$/, '').toLowerCase().replace(/[^a-z0-9_-]/g, '_');
   memeNameInput.value = baseName;
   uploadPreview.style.display = 'block';
@@ -204,6 +235,12 @@ uploadSubmit.addEventListener('click', async () => {
 
   if (!getLoggedInUser() && !(await NeoAuth.requireSignIn({ reason: UPLOAD_REASON }))) return;
 
+  if (!uploadLabels.commit()) return;
+  let organization;
+  try { organization = validateOrganization(memeCatSelect.value, uploadLabels.getLabels()); }
+  catch (error) { uploadError.textContent = error.message; return; }
+  uploadError.textContent = '';
+  const selectedFile = state.selectedFile;
   uploadSubmit.disabled = true;
   uploadSubmit.textContent = 'Uploading\u2026';
 
@@ -212,16 +249,17 @@ uploadSubmit.addEventListener('click', async () => {
 
     const res = await fetch(uploadUrl, {
       method: 'POST',
-      headers: { 'Content-Type': state.selectedFile.type },
-      body: state.selectedFile,
+      headers: { 'Content-Type': selectedFile.type },
+      body: selectedFile,
     });
+    if (!res.ok) throw new Error('The image could not be uploaded. Please try again.');
     const { storageId } = await res.json();
 
-    const ext = state.selectedFile.name.split('.').pop().toLowerCase();
+    const ext = { 'image/png': 'png', 'image/jpeg': 'jpg', 'image/gif': 'gif', 'image/webp': 'webp' }[selectedFile.type];
     const isAnon = document.getElementById('anonCheck').checked;
     await convex.mutation(api.memes.saveMeme, {
       name,
-      category: memeCatSelect.value,
+      ...organization,
       ext,
       storageId,
       displayAnonymous: isAnon,
@@ -233,15 +271,19 @@ uploadSubmit.addEventListener('click', async () => {
     uploadPreview.style.display = 'none';
     dropZone.textContent = 'Drop an image here, or click to browse';
     memeNameInput.value = '';
+    uploadLabels.setLabels();
+    if (previewUrl) URL.revokeObjectURL(previewUrl);
+    previewUrl = null;
+    previewImg.removeAttribute('src');
     fileInput.value = '';
 
     await loadConvexMemes();
   } catch (e) {
-    showToast('Upload failed: ' + e.message);
+    uploadError.textContent = 'Upload failed. Your details are still here; please try again.';
   }
 
   uploadSubmit.disabled = false;
-  uploadSubmit.textContent = 'Upload Meme';
+  uploadSubmit.textContent = 'Upload meme';
 });
 
 // ── Lightbox with prev/next ───────────────────────────────────────────
@@ -260,51 +302,145 @@ let currentMeme = null;
 let currentIndex = -1;
 let currentList = [];
 
+const organizeForm = document.getElementById('organizeForm');
+const organizeToggle = document.getElementById('organizeToggle');
+const organizeFields = document.getElementById('organizeFields');
+const organizeSave = document.getElementById('organizeSave');
+const organizeError = document.getElementById('organizeError');
+const organizeLabels = createLabelInput(document.getElementById('organizeLabels'), { id: 'organizeLabelsInput', suggestions: allLabels });
+let savingOrganization = false;
+
+function renderLightboxOrganization() {
+  if (!currentMeme) return;
+  const latest = getAllMemes().find(meme => currentMeme._id ? meme._id === currentMeme._id : !meme._id && meme.name === currentMeme.name);
+  if (latest) currentMeme = latest;
+  const taxonomy = document.getElementById('lightboxTaxonomy');
+  taxonomy.replaceChildren();
+  [categoryName(currentMeme.category), ...(currentMeme.labels || [])].forEach((text, index) => {
+    const tag = document.createElement('span');
+    tag.className = index === 0 ? 'viewer-category' : 'viewer-label';
+    tag.textContent = text;
+    taxonomy.append(tag);
+  });
+  organizeForm.hidden = true;
+  organizeToggle.setAttribute('aria-expanded', 'false');
+  organizeToggle.disabled = !!getLoggedInUser() && !canOrganize(currentMeme);
+  document.getElementById('organizeHint').textContent = !getLoggedInUser()
+    ? 'Sign in to organize your uploads. Admins can organize any meme.'
+    : canOrganize(currentMeme) ? 'Category and label changes are shared with everyone.'
+    : 'Only the uploader or an admin can organize this meme.';
+}
+
 function setLightboxMeme(meme, index) {
   currentMeme = meme;
   currentIndex = index;
-  lightboxImg.classList.add('switching');
-  setTimeout(() => {
-    lightboxImg.src = meme.path;
-    if (meme.isNew) lightboxImg.crossOrigin = 'anonymous';
-    lightboxName.textContent = formatName(meme.name);
-    lightboxCounter.textContent = `${index + 1} / ${currentList.length}`;
-    lightboxImg.classList.remove('switching');
-  }, 150);
+  lightboxImg.crossOrigin = meme.isNew ? 'anonymous' : null;
+  lightboxImg.src = meme.path;
+  lightboxImg.alt = formatName(meme.name);
+  lightboxName.textContent = formatName(meme.name);
+  lightboxCounter.textContent = `${index + 1} of ${currentList.length}`;
+  renderLightboxOrganization();
 }
+
+function beginOrganizing() {
+  if (!currentMeme || !canOrganize(currentMeme)) return;
+  document.getElementById('organizeCategory').value = currentMeme.category;
+  organizeLabels.setLabels(currentMeme.labels);
+  organizeError.textContent = '';
+  organizeForm.hidden = false;
+  organizeToggle.setAttribute('aria-expanded', 'true');
+  document.getElementById('organizeCategory').focus();
+}
+
+organizeToggle.addEventListener('click', async event => {
+  if (!getLoggedInUser()) {
+    const meme = currentMeme;
+    closeLightbox();
+    const signedIn = await NeoAuth.requireSignIn({ reason: 'Sign in to organize your uploads.' });
+    if (signedIn && meme) openLightbox(meme, { organize: true });
+    return;
+  }
+  if (!organizeForm.hidden) { renderLightboxOrganization(); return; }
+  beginOrganizing();
+});
+document.getElementById('organizeCancel').addEventListener('click', () => {
+  renderLightboxOrganization();
+  organizeToggle.focus();
+});
+organizeForm.addEventListener('submit', async event => {
+  event.preventDefault();
+  if (savingOrganization || !currentMeme || !canOrganize(currentMeme) || !organizeLabels.commit()) return;
+  let organization;
+  try { organization = validateOrganization(document.getElementById('organizeCategory').value, organizeLabels.getLabels()); }
+  catch (error) { organizeError.textContent = error.message; return; }
+  const meme = currentMeme;
+  savingOrganization = true;
+  organizeFields.disabled = true;
+  organizeToggle.disabled = true;
+  lbPrev.disabled = lbNext.disabled = true;
+  organizeSave.textContent = 'Saving…';
+  organizeError.textContent = '';
+  try {
+    const saved = await convex.mutation(api.memes.organize, { ...(meme._id ? { memeId: meme._id } : {}), memeKey: meme.name, ...organization });
+    if (meme._id) state.convexMemes = state.convexMemes.map(item => item._id === meme._id ? { ...item, ...saved } : item);
+    else state.organization[meme.name] = saved;
+    rebuildChips();
+    filterGrid();
+    renderLightboxOrganization();
+    showToast('Category and labels saved');
+  } catch (error) {
+    organizeError.textContent = 'Could not save changes. Your edits are still here; please try again.';
+  } finally {
+    savingOrganization = false;
+    organizeFields.disabled = false;
+    organizeToggle.disabled = !!currentMeme && !!getLoggedInUser() && !canOrganize(currentMeme);
+    lbPrev.disabled = lbNext.disabled = false;
+    organizeSave.textContent = 'Save changes';
+    if (organizeForm.hidden && currentMeme) organizeToggle.focus();
+  }
+});
 
 let lightboxReturnFocus = null;
 
-export function openLightbox(meme) {
-  currentList = getAllMemes();
-  const idx = currentList.findIndex(m => m.name === meme.name && m.path === meme.path);
-  currentIndex = idx >= 0 ? idx : 0;
-  currentMeme = meme;
-  lightboxImg.src = meme.path;
-  if (meme.isNew) lightboxImg.crossOrigin = 'anonymous';
-  lightboxName.textContent = formatName(meme.name);
-  lightboxCounter.textContent = `${currentIndex + 1} / ${currentList.length}`;
+export function openLightbox(meme, { organize = false } = {}) {
+  if (savingOrganization) return;
+  const matches = item => meme._id ? item._id === meme._id : !item._id && item.name === meme.name;
+  currentList = getFilteredMemes();
+  if (!currentList.some(matches)) currentList = getAllMemes();
+  const index = currentList.findIndex(matches);
+  setLightboxMeme(meme, index >= 0 ? index : 0);
+  lightboxReturnFocus = document.activeElement;
+  lightbox.inert = false;
   lightbox.classList.add('open');
   lightbox.setAttribute('aria-hidden', 'false');
+  document.querySelector('main').inert = true;
+  document.querySelector('header').inert = true;
+  document.querySelector('footer').inert = true;
+  document.getElementById('scrollTop').inert = true;
   document.body.style.overflow = 'hidden';
-  lightboxReturnFocus = document.activeElement;
   lbClose.focus();
+  if (organize && canOrganize(meme)) beginOrganizing();
 }
 
 function closeLightbox() {
+  if (savingOrganization) return;
   lightbox.classList.remove('open');
   lightbox.setAttribute('aria-hidden', 'true');
+  lightbox.inert = true;
+  document.querySelector('main').inert = false;
+  document.querySelector('header').inert = false;
+  document.querySelector('footer').inert = false;
+  document.getElementById('scrollTop').inert = false;
   document.body.style.overflow = '';
   currentMeme = null;
   currentIndex = -1;
-  if (lightboxReturnFocus && typeof lightboxReturnFocus.focus === 'function') {
-    lightboxReturnFocus.focus();
-  }
+  if (lightboxReturnFocus?.isConnected) lightboxReturnFocus.focus();
+  else searchInput.focus();
   lightboxReturnFocus = null;
 }
 
 function navigateLightbox(dir) {
-  if (currentList.length === 0) return;
+  if (currentList.length === 0 || savingOrganization) return;
   const next = (currentIndex + dir + currentList.length) % currentList.length;
   setLightboxMeme(currentList[next], next);
 }
@@ -332,11 +468,12 @@ lbDownload.addEventListener('click', () => {
 document.addEventListener('keydown', (e) => {
   if (!lightbox.classList.contains('open')) return;
   if (e.key === 'Escape') { closeLightbox(); return; }
-  if (e.key === 'ArrowLeft')  { navigateLightbox(-1); return; }
-  if (e.key === 'ArrowRight') { navigateLightbox(1); return; }
+  const editing = /INPUT|TEXTAREA|SELECT/.test(e.target.tagName);
+  if (!editing && organizeForm.hidden && e.key === 'ArrowLeft')  { navigateLightbox(-1); return; }
+  if (!editing && organizeForm.hidden && e.key === 'ArrowRight') { navigateLightbox(1); return; }
   if (e.key === 'Tab') {
     // Trap focus among the lightbox's interactive controls.
-    const focusable = lightbox.querySelectorAll('button:not([disabled])');
+    const focusable = [...lightbox.querySelectorAll('button:not(:disabled), input:not(:disabled), select:not(:disabled)')].filter(element => element.getClientRects().length > 0);
     if (!focusable.length) return;
     const first = focusable[0];
     const last = focusable[focusable.length - 1];
@@ -355,8 +492,8 @@ document.addEventListener('keydown', (e) => {
 
 // ── Random meme ──────────────────────────────────────────────────────
 document.getElementById('randomBtn').addEventListener('click', () => {
-  const all = getAllMemes();
-  if (all.length === 0) return;
+  const all = getFilteredMemes();
+  if (all.length === 0) { showToast('No memes match. Clear a filter to try a random pick.'); return; }
   const rand = all[Math.floor(Math.random() * all.length)];
   openLightbox(rand);
 });

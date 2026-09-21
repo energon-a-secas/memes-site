@@ -5,7 +5,7 @@ import { safeGet, safeSet } from './neorgon-persist.js';
 
 // ── Shared mutable state + Convex client ─────────────────────────────
 import { ConvexHttpClient } from "https://esm.sh/convex@1.21.0/browser";
-import { MEMES, CATEGORIES } from './data.js';
+import { MEMES } from './data.js';
 
 // ── Convex client ────────────────────────────────────────────────────
 const CONVEX_URL = "https://polite-jellyfish-291.convex.cloud";
@@ -13,7 +13,7 @@ export const convex = new ConvexHttpClient(CONVEX_URL);
 
 // Function references (strings at runtime — no build step needed)
 export const api = {
-  memes: { list: "memes:list", getUploadUrl: "memes:getUploadUrl", saveMeme: "memes:saveMeme", deleteMeme: "memes:deleteMeme" },
+  memes: { list: "memes:list", getUploadUrl: "memes:getUploadUrl", saveMeme: "memes:saveMeme", deleteMeme: "memes:deleteMeme", organization: "memes:organization", organize: "memes:organize" },
   auth: { isAdmin: "auth:isAdmin" },
   votes: { getVotes: "votes:getVotes", toggleVote: "votes:toggleVote" },
 };
@@ -32,6 +32,9 @@ export const visitorId = getVisitorId();
 // ── Mutable application state ────────────────────────────────────────
 export const state = {
   activeCategory: 'all',
+  activeLabels: new Set(),
+  organization: {},
+  authSubject: null,
   sortBy: 'recent',           // 'recent' | 'default' | 'votes'
   convexMemes: [],
   selectedFile: null,
@@ -42,9 +45,10 @@ export const state = {
   isConvexAdmin: false,
 };
 
-export function setAuthSession(label, isAdmin) {
+export function setAuthSession(label, isAdmin, subject = state.authSubject) {
   state.authLabel = label || null;
   state.isConvexAdmin = !!isAdmin;
+  state.authSubject = label ? subject : null;
 }
 
 export function getLoggedInUser() {
@@ -59,6 +63,8 @@ export function getAllMemes() {
     _id: m._id,
     name: m.name,
     category: m.category,
+    labels: m.labels || [],
+    ownerSubject: m.ownerSubject,
     path: m.url,
     ext: m.ext,
     id: MEMES.length + i + 1,
@@ -66,5 +72,9 @@ export function getAllMemes() {
     displayName: m.displayName || 'Anon',
     _creationTime: m._creationTime,
   }));
-  return [...MEMES, ...mapped];
+  return [...MEMES.map(meme => ({ ...meme, labels: [], ...state.organization[meme.name] })), ...mapped];
+}
+
+export function canOrganize(meme) {
+  return !!state.authLabel && (state.isConvexAdmin || !!(meme._id && meme.ownerSubject && meme.ownerSubject === state.authSubject));
 }

@@ -31,12 +31,20 @@ export default defineSchema({
   memes: defineTable({
     name: v.string(),
     category: v.string(),
+    labels: v.optional(v.array(v.string())),
     ext: v.string(),
     storageId: v.id("_storage"),
     uploadedBy: v.string(),
     displayAnonymous: v.boolean(),
     ownerSubject: v.optional(v.string()),
   }),
+
+  // Organization for bundled images, whose files and stable names stay in git.
+  memeOrganization: defineTable({
+    memeKey: v.string(),
+    category: v.string(),
+    labels: v.array(v.string()),
+  }).index("by_meme", ["memeKey"]),
 
   votes: defineTable({
     memeKey: v.string(),

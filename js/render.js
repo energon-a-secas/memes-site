@@ -2,6 +2,7 @@
 import { CATEGORIES, MEMES } from './data.js';
 import { state, getAllMemes } from './state.js';
 import { formatName, copyMemeImage, downloadMeme } from './utils.js';
+import { categoryName, selectMemes } from './organization.js';
 import { openLightbox, handleVoteClick, handleDeleteMeme } from './events.js';
 
 // ── Meme of the Day ─────────────────────────────────────────────────
@@ -21,7 +22,7 @@ export function renderMemeOfTheDay() {
   img.src = meme.path;
   img.alt = formatName(meme.name);
   name.textContent = formatName(meme.name);
-  banner.style.display = 'block';
+  banner.style.display = 'flex';
 
   img.addEventListener('click', () => openLightbox(meme));
   document.getElementById('motdView').addEventListener('click', () => openLightbox(meme));
@@ -43,35 +44,120 @@ const grid        = document.getElementById('memeGrid');
 const chipsEl     = document.getElementById('chips');
 const resultInfo  = document.getElementById('resultInfo');
 const searchInput = document.getElementById('searchInput');
-const recentSection = document.getElementById('recentSection');
-const recentRow     = document.getElementById('recentRow');
 
-// ── Chip factory ─────────────────────────────────────────────────────
-function makeChip(value, label, count) {
-  const c = document.createElement('button');
-  c.className = 'chip' + (value === state.activeCategory ? ' active' : '');
-  c.dataset.value = value;
-  c.innerHTML = `${label}<span class="chip-count">${count}</span>`;
-  c.addEventListener('click', () => {
-    document.querySelectorAll('.chip').forEach(x => x.classList.remove('active'));
-    c.classList.add('active');
-    state.activeCategory = value;
-    filterGrid();
-  });
-  return c;
+
+// Category navigation and label filters use text nodes for user-created names.
+export function chooseCategory(value) {
+  state.activeCategory = value;
+  rebuildChips();
+  filterGrid();
 }
 
-/** Rebuild category chips from current data (hardcoded + Convex). */
+function makeChip(value, label, count) {
+  const button = document.createElement('button');
+  button.className = 'chip' + (value === state.activeCategory ? ' active' : '');
+  button.dataset.value = value;
+  button.setAttribute('aria-pressed', String(value === state.activeCategory));
+  const title = document.createElement('span');
+  title.textContent = label;
+  const total = document.createElement('span');
+  total.className = 'chip-count';
+  total.textContent = count;
+  button.append(title, total);
+  button.addEventListener('click', () => chooseCategory(value));
+  return button;
+}
+
+export function allLabels() {
+  return [...new Set(getAllMemes().flatMap(meme => meme.labels || []))].sort((a, b) => a.localeCompare(b));
+}
+
 export function rebuildChips() {
-  chipsEl.innerHTML = '';
+  const focusedCategory = chipsEl.contains(document.activeElement) ? document.activeElement.dataset.value : null;
   const all = getAllMemes();
-  const counts = {};
-  all.forEach(m => { counts[m.category] = (counts[m.category] || 0) + 1; });
-  const cats = [...new Set([...CATEGORIES, ...state.convexMemes.map(m => m.category)])];
-  chipsEl.appendChild(makeChip('all', 'All', all.length));
-  cats.forEach(cat => {
-    if (counts[cat]) chipsEl.appendChild(makeChip(cat, cat, counts[cat]));
+  const counts = new Map();
+  all.forEach(meme => counts.set(meme.category, (counts.get(meme.category) || 0) + 1));
+  const categories = [...new Set([...CATEGORIES, ...counts.keys()])].sort((a, b) => categoryName(a).localeCompare(categoryName(b)));
+  chipsEl.replaceChildren(makeChip('all', 'All memes', all.length));
+  categories.filter(category => counts.has(category) || category === state.activeCategory).forEach(category => chipsEl.append(makeChip(category, categoryName(category), counts.get(category) || 0)));
+  if (focusedCategory) [...chipsEl.children].find(button => button.dataset.value === focusedCategory)?.focus({ preventScroll: true });
+  document.getElementById('categoryOptions').replaceChildren(...categories.map(category => new Option(categoryName(category), category)));
+  document.getElementById('subtitle').textContent = `${all.length} internal jokes`;
+  renderLabelFilters();
+}
+
+export function toggleLabel(label) {
+  if (state.activeLabels.has(label)) state.activeLabels.delete(label);
+  else state.activeLabels.add(label);
+  filterGrid();
+}
+
+export function renderLabelFilters() {
+  const root = document.getElementById('labelFilters');
+  const focusedLabel = root.contains(document.activeElement) ? document.activeElement.dataset.label : null;
+  const labels = allLabels();
+  const query = document.getElementById('labelSearch').value.trim().toLowerCase();
+  const available = getAllMemes().filter(meme => state.activeCategory === 'all' || meme.category === state.activeCategory);
+  document.getElementById('labelTotal').textContent = labels.length || '';
+  document.getElementById('labelSearch').hidden = labels.length < 6;
+  root.replaceChildren();
+  labels.filter(label => label.includes(query)).forEach(label => {
+    const button = document.createElement('button');
+    button.className = 'label-filter' + (state.activeLabels.has(label) ? ' active' : '');
+    button.dataset.label = label;
+    button.setAttribute('aria-pressed', String(state.activeLabels.has(label)));
+    const text = document.createElement('span');
+    text.textContent = label;
+    const count = document.createElement('span');
+    count.className = 'label-count';
+    count.textContent = available.filter(meme => (meme.labels || []).includes(label)).length;
+    button.append(text, count);
+    button.addEventListener('click', () => toggleLabel(label));
+    root.append(button);
   });
+  if (!root.childElementCount) {
+    const hint = document.createElement('p');
+    hint.className = 'field-hint';
+    hint.textContent = labels.length ? 'No labels match your search.' : 'No labels yet. Add them when uploading or organizing a meme.';
+    root.append(hint);
+  }
+  if (focusedLabel) [...root.children].find(button => button.dataset.label === focusedLabel)?.focus({ preventScroll: true });
+}
+
+export function resetFilters() {
+  state.activeCategory = 'all';
+  state.activeLabels.clear();
+  searchInput.value = '';
+  document.getElementById('labelSearch').value = '';
+  rebuildChips();
+  filterGrid();
+  searchInput.focus({ preventScroll: true });
+}
+
+function renderActiveFilters() {
+  const root = document.getElementById('activeFilters');
+  const hadFocus = root.contains(document.activeElement);
+  root.replaceChildren();
+  const add = (text, action) => {
+    const button = document.createElement('button');
+    button.className = 'filter-token';
+    button.textContent = `${text} ×`;
+    button.setAttribute('aria-label', `Remove filter ${text}`);
+    button.addEventListener('click', action);
+    root.append(button);
+  };
+  if (state.activeCategory !== 'all') add(categoryName(state.activeCategory), () => chooseCategory('all'));
+  state.activeLabels.forEach(label => add(label, () => toggleLabel(label)));
+  if (searchInput.value.trim()) add(`“${searchInput.value.trim()}”`, () => { searchInput.value = ''; filterGrid(); });
+  root.hidden = !root.childElementCount;
+  if (!root.hidden) {
+    const clear = document.createElement('button');
+    clear.className = 'text-button';
+    clear.textContent = 'Clear all';
+    clear.addEventListener('click', resetFilters);
+    root.append(clear);
+  }
+  if (hadFocus) (root.querySelector('button') || searchInput).focus({ preventScroll: true });
 }
 
 // ── Card factory ─────────────────────────────────────────────────────
@@ -83,6 +169,7 @@ export function makeCard(m) {
 
   const img = document.createElement('img');
   img.className = 'meme-img';
+  if (m.isNew) img.crossOrigin = 'anonymous';
   img.src = m.path;
   img.alt = readableName;
   img.loading = 'lazy';
@@ -92,12 +179,10 @@ export function makeCard(m) {
   const meta = document.createElement('div');
   meta.className = 'meme-meta';
   const newBadge = m.isNew ? '<span class="badge-new">new</span>' : '';
-  meta.innerHTML = `
-    <div class="meme-name" title="${formatName(m.name)}">${formatName(m.name)}</div>
-    <div class="meme-badges">
-      <span class="badge-ext">${m.ext}</span>
-      ${newBadge}
-    </div>`;
+  meta.innerHTML = '<div class="meme-name"></div><div class="meme-badges"><span class="badge-ext"></span>' + newBadge + '</div>';
+  meta.querySelector('.meme-name').textContent = readableName;
+  meta.querySelector('.meme-name').title = readableName;
+  meta.querySelector('.badge-ext').textContent = m.ext;
 
   // Vote row: upvote | score | downvote
   const voteRow = document.createElement('div');
@@ -115,7 +200,7 @@ export function makeCard(m) {
 
   const scoreEl = document.createElement('span');
   scoreEl.className = 'vote-score' + (score > 0 ? ' positive' : score < 0 ? ' negative' : '');
-  scoreEl.textContent = score !== 0 ? String(score) : '';
+  scoreEl.textContent = String(score);
   if (score !== 0) scoreEl.setAttribute('aria-label', `Score ${score}`);
 
   const downBtn = document.createElement('button');
@@ -179,6 +264,36 @@ export function makeCard(m) {
   card.addEventListener('click', () => openLightbox(m));
   card.appendChild(imgWrap);
   card.appendChild(meta);
+  const taxonomy = document.createElement('div');
+  taxonomy.className = 'card-taxonomy';
+  const category = document.createElement('button');
+  category.className = 'card-category';
+  category.textContent = categoryName(m.category);
+  category.setAttribute('aria-label', `Filter by category ${categoryName(m.category)}`);
+  category.addEventListener('click', event => { event.stopPropagation(); chooseCategory(m.category); });
+  taxonomy.append(category);
+  (m.labels || []).slice(0, 2).forEach(label => {
+    const button = document.createElement('button');
+    button.className = 'card-label';
+    button.textContent = label;
+    button.setAttribute('aria-label', `Filter by label ${label}`);
+    button.addEventListener('click', event => { event.stopPropagation(); toggleLabel(label); });
+    taxonomy.append(button);
+  });
+  if ((m.labels || []).length > 2) {
+    const more = document.createElement('span');
+    more.className = 'more-labels';
+    more.textContent = `+${m.labels.length - 2}`;
+    more.title = m.labels.slice(2).join(', ');
+    taxonomy.append(more);
+  }
+  card.append(taxonomy);
+  const organize = document.createElement('button');
+  organize.className = 'card-organize';
+  organize.textContent = 'Organize';
+  organize.setAttribute('aria-label', `Organize ${readableName}`);
+  organize.addEventListener('click', event => { event.stopPropagation(); openLightbox(m, { organize: true }); });
+  voteRow.append(organize);
   // Uploader credit (Convex memes only)
   if (m.displayName) {
     const uploaderEl = document.createElement('div');
@@ -197,86 +312,34 @@ function renderGrid(memes) {
   grid.innerHTML = '';
   if (memes.length === 0) {
     const q = searchInput.value.trim();
-    const filtered = q || state.activeCategory !== 'all';
+    const filtered = q || state.activeCategory !== 'all' || state.activeLabels.size;
     const el = document.createElement('div');
     el.className = 'empty-state';
     el.innerHTML = `
       ${EMPTY_SVG}
       <div class="empty-state-title">${filtered ? 'No memes match' : 'No memes yet'}</div>
       <div class="empty-state-hint">${filtered
-        ? 'Try a different word or clear the category filter.'
+        ? 'Try another search, category or label. Or clear the filters to see everything.'
         : 'Upload the first one to get the vault started.'}</div>
       ${filtered ? '<button type="button" class="empty-state-reset" id="emptyReset">Clear search &amp; filters</button>' : ''}`;
     grid.appendChild(el);
     const reset = document.getElementById('emptyReset');
-    if (reset) reset.addEventListener('click', () => {
-      searchInput.value = '';
-      state.activeCategory = 'all';
-      document.querySelectorAll('.chip').forEach(x => x.classList.toggle('active', x.dataset.value === 'all'));
-      filterGrid();
-    });
+    if (reset) reset.addEventListener('click', resetFilters);
   } else {
     const frag = document.createDocumentFragment();
-    const isFirstRender = !grid.classList.contains('loaded');
-    memes.forEach((m, i) => {
-      const card = makeCard(m);
-      if (isFirstRender) {
-        card.style.animationDelay = `${Math.min(i, 20) * 30}ms`;
-      }
-      frag.appendChild(card);
-    });
+    memes.forEach(meme => frag.appendChild(makeCard(meme)));
     grid.appendChild(frag);
-    // Mark grid as loaded after first entrance animation finishes
-    if (isFirstRender) {
-      setTimeout(() => grid.classList.add('loaded'), 700);
-    }
   }
-  resultInfo.textContent = `${memes.length} meme${memes.length !== 1 ? 's' : ''}`;
+  resultInfo.textContent = `${memes.length} of ${getAllMemes().length} memes${state.activeLabels.size > 1 ? ' · matching all selected labels' : ''}`;
 }
 
-/** Filter memes by active category and search query, apply sort, then re-render. */
+export function getFilteredMemes() {
+  return selectMemes(getAllMemes(), { category: state.activeCategory, labels: [...state.activeLabels], query: searchInput.value, sort: state.sortBy, votes: state.voteCounts });
+}
+
 export function filterGrid() {
-  const q = searchInput.value.toLowerCase().trim();
-  const all = getAllMemes();
-  let filtered = all.filter(m => {
-    const catMatch = state.activeCategory === 'all' || m.category === state.activeCategory;
-    const nameMatch = !q || m.name.toLowerCase().includes(q) || formatName(m.name).toLowerCase().includes(q);
-    return catMatch && nameMatch;
-  });
-
-  if (state.sortBy === 'votes') {
-    filtered.sort((a, b) => (state.voteCounts[b.name] || 0) - (state.voteCounts[a.name] || 0));
-  } else if (state.sortBy === 'recent') {
-    filtered.sort((a, b) => {
-      const aTime = a._creationTime ?? -a.id;
-      const bTime = b._creationTime ?? -b.id;
-      return bTime - aTime;
-    });
-  }
-
-  renderGrid(filtered);
-}
-
-/** Render the "Recently Added" row with the last 5 Convex uploads. */
-export function renderRecentlyAdded() {
-  if (state.convexMemes.length === 0) {
-    recentSection.style.display = 'none';
-    return;
-  }
-  recentSection.style.display = 'block';
-  recentRow.innerHTML = '';
-  const recent = state.convexMemes.slice(0, 5);
-  const frag = document.createDocumentFragment();
-  recent.forEach((m, i) => {
-    const meme = {
-      name: m.name,
-      category: m.category,
-      path: m.url,
-      ext: m.ext,
-      id: getAllMemes().length - state.convexMemes.length + i + 1,
-      isNew: true,
-    };
-    frag.appendChild(makeCard(meme));
-  });
-  recentRow.appendChild(frag);
+  document.getElementById('collectionTitle').textContent = state.activeCategory === 'all' ? 'All memes' : categoryName(state.activeCategory);
+  renderGrid(getFilteredMemes());
+  renderActiveFilters();
+  renderLabelFilters();
 }
