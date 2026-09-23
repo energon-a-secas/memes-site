@@ -117,9 +117,9 @@
             <div class="upload-fields">
               <label for="memeNameInput">Meme name</label>
               <input type="text" id="memeNameInput" placeholder="Give it a memorable name" maxlength="120">
-              <label for="memeCatSelect">Category</label>
-              <input type="text" id="memeCatSelect" list="categoryOptions" value="general" maxlength="40" placeholder="Choose or create a category" aria-describedby="uploadCategoryHint">
-              <p class="field-hint" id="uploadCategoryHint">Choose an existing category or type a new one.</p>
+              <span class="field-label" id="uploadCategoryLabel">Category</span>
+              <button type="button" class="field-picker" id="memeCatSelect" aria-labelledby="uploadCategoryLabel" aria-describedby="uploadCategoryHint"></button>
+              <p class="field-hint" id="uploadCategoryHint">Opens the category list. You can add a new one there.</p>
               <label for="uploadLabelsInput">Labels <span class="optional">(optional)</span></label>
               <div id="uploadLabels"></div>
               <label class="anon-label">
@@ -167,8 +167,6 @@
         <div class="meme-grid" id="memeGrid" role="list" aria-label="Memes"></div>
       </section>
     </div>
-    <datalist id="categoryOptions"></datalist>
-
   </main>
 
   <!-- Lightbox -->
@@ -205,9 +203,9 @@
           <p class="field-hint" id="organizeHint">Add labels and choose a category.</p>
           <form id="organizeForm" hidden>
             <fieldset id="organizeFields">
-              <label for="organizeCategory">Category</label>
-              <input type="text" id="organizeCategory" list="categoryOptions" maxlength="40" required aria-describedby="organizeCategoryHint">
-              <p class="field-hint" id="organizeCategoryHint">Choose an existing category or type a new one.</p>
+              <span class="field-label" id="organizeCategoryLabel">Category</span>
+              <button type="button" class="field-picker" id="organizeCategory" aria-labelledby="organizeCategoryLabel" aria-describedby="organizeCategoryHint"></button>
+              <p class="field-hint" id="organizeCategoryHint">Opens the category list. You can add a new one there.</p>
               <label for="organizeLabelsInput">Labels</label>
               <div id="organizeLabels"></div>
               <p class="field-error" id="organizeError" role="alert"></p>

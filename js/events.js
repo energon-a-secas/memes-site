@@ -2,9 +2,11 @@
 import { MEMES } from './data.js';
 import { state, convex, api, visitorId, getAllMemes, getLoggedInUser, setAuthSession, canOrganize } from './state.js';
 import { showToast, formatName, copyMemeUrl, copyMemeImage, downloadMeme, errorMessage } from './utils.js';
-import { rebuildChips, filterGrid, renderLabelFilters, getFilteredMemes, allLabels } from './render.js';
+import { rebuildChips, filterGrid, renderLabelFilters, getFilteredMemes, labelChoices } from './render.js';
 import { categoryName, validateOrganization } from './organization.js';
 import { createLabelInput } from './label-input.js';
+import { pickerIsOpen } from './picker.js';
+import { createCategoryField } from './categories.js';
 import { NeoAuth } from './neorgon-auth.js';
 
 // Respect prefers-reduced-motion for JS-driven smooth scrolling.
@@ -21,8 +23,11 @@ document.getElementById('filterToggle').addEventListener('click', event => {
   event.currentTarget.setAttribute('aria-expanded', String(open));
   event.currentTarget.textContent = open ? 'Filters −' : 'Filters +';
 });
+/** A modal dialog runs its own keyboard; the page's shortcuts must not fight it. */
+const dialogIsOpen = () => pickerIsOpen() || !!document.querySelector('dialog[open]');
+
 document.addEventListener('keydown', event => {
-  if (event.key === '/' && !/INPUT|TEXTAREA|SELECT/.test(event.target.tagName) && !event.target.isContentEditable && !document.getElementById('lightbox').classList.contains('open')) {
+  if (event.key === '/' && !dialogIsOpen() && !/INPUT|TEXTAREA|SELECT/.test(event.target.tagName) && !event.target.isContentEditable && !document.getElementById('lightbox').classList.contains('open')) {
     event.preventDefault();
     searchInput.focus();
   }
@@ -156,6 +161,7 @@ async function refreshAdminFlag() {
   if (!getLoggedInUser() || subject !== state.authSubject || isAdmin === state.isConvexAdmin) return;
   setAuthSession(state.authLabel, isAdmin);
   if (currentMeme) renderLightboxOrganization();
+  renderAuthState();
   filterGrid();
 
 }
@@ -189,9 +195,9 @@ const fileInput      = document.getElementById('fileInput');
 const uploadPreview  = document.getElementById('uploadPreview');
 const previewImg     = document.getElementById('previewImg');
 const memeNameInput  = document.getElementById('memeNameInput');
-const memeCatSelect  = document.getElementById('memeCatSelect');
+const memeCategory   = createCategoryField(document.getElementById('memeCatSelect'));
 const uploadSubmit   = document.getElementById('uploadSubmit');
-const uploadLabels = createLabelInput(document.getElementById('uploadLabels'), { id: 'uploadLabelsInput', suggestions: allLabels });
+const uploadLabels = createLabelInput(document.getElementById('uploadLabels'), { id: 'uploadLabelsInput', choices: labelChoices });
 const uploadError = document.getElementById('uploadError');
 let previewUrl = null;
 
@@ -237,7 +243,7 @@ uploadSubmit.addEventListener('click', async () => {
 
   if (!uploadLabels.commit()) return;
   let organization;
-  try { organization = validateOrganization(memeCatSelect.value, uploadLabels.getLabels()); }
+  try { organization = validateOrganization(memeCategory.value, uploadLabels.getLabels()); }
   catch (error) { uploadError.textContent = error.message; return; }
   uploadError.textContent = '';
   const selectedFile = state.selectedFile;
@@ -310,7 +316,8 @@ const organizeToggle = document.getElementById('organizeToggle');
 const organizeFields = document.getElementById('organizeFields');
 const organizeSave = document.getElementById('organizeSave');
 const organizeError = document.getElementById('organizeError');
-const organizeLabels = createLabelInput(document.getElementById('organizeLabels'), { id: 'organizeLabelsInput', suggestions: allLabels });
+const organizeLabels = createLabelInput(document.getElementById('organizeLabels'), { id: 'organizeLabelsInput', choices: labelChoices });
+const organizeCategory = createCategoryField(document.getElementById('organizeCategory'));
 let savingOrganization = false;
 
 function renderLightboxOrganization() {
@@ -347,7 +354,7 @@ function setLightboxMeme(meme, index) {
 
 function beginOrganizing() {
   if (!currentMeme || !canOrganize(currentMeme)) return;
-  document.getElementById('organizeCategory').value = currentMeme.category;
+  organizeCategory.value = currentMeme.category;
   organizeLabels.setLabels(currentMeme.labels);
   organizeError.textContent = '';
   organizeForm.hidden = false;
@@ -374,7 +381,7 @@ organizeForm.addEventListener('submit', async event => {
   event.preventDefault();
   if (savingOrganization || !currentMeme || !canOrganize(currentMeme) || !organizeLabels.commit()) return;
   let organization;
-  try { organization = validateOrganization(document.getElementById('organizeCategory').value, organizeLabels.getLabels()); }
+  try { organization = validateOrganization(organizeCategory.value, organizeLabels.getLabels()); }
   catch (error) { organizeError.textContent = error.message; return; }
   const meme = currentMeme;
   savingOrganization = true;
@@ -470,7 +477,7 @@ lbDownload.addEventListener('click', () => {
 });
 
 document.addEventListener('keydown', (e) => {
-  if (!lightbox.classList.contains('open')) return;
+  if (!lightbox.classList.contains('open') || dialogIsOpen()) return;
   if (e.key === 'Escape') { closeLightbox(); return; }
   const editing = /INPUT|TEXTAREA|SELECT/.test(e.target.tagName);
   if (!editing && organizeForm.hidden && e.key === 'ArrowLeft')  { navigateLightbox(-1); return; }

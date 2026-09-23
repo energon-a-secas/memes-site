@@ -72,16 +72,33 @@ export function allLabels() {
   return [...new Set(getAllMemes().flatMap(meme => meme.labels || []))].sort((a, b) => a.localeCompare(b));
 }
 
+/** Every category in play, with its size. Feeds the chips, the picker and the admin list. */
+export function categoryChoices() {
+  const counts = new Map();
+  getAllMemes().forEach(meme => counts.set(meme.category, (counts.get(meme.category) || 0) + 1));
+  const names = new Set([...CATEGORIES, ...counts.keys()]);
+  return [...names]
+    .map(value => ({ value, label: categoryName(value), count: counts.get(value) || 0 }))
+    .sort((a, b) => a.label.localeCompare(b.label));
+}
+
+/** Existing labels, busiest first, which is the order worth browsing. */
+export function labelChoices() {
+  const counts = new Map();
+  getAllMemes().forEach(meme => (meme.labels || []).forEach(label => counts.set(label, (counts.get(label) || 0) + 1)));
+  return [...counts]
+    .map(([value, count]) => ({ value, label: value, count }))
+    .sort((a, b) => b.count - a.count || a.value.localeCompare(b.value));
+}
+
 export function rebuildChips() {
   const focusedCategory = chipsEl.contains(document.activeElement) ? document.activeElement.dataset.value : null;
   const all = getAllMemes();
-  const counts = new Map();
-  all.forEach(meme => counts.set(meme.category, (counts.get(meme.category) || 0) + 1));
-  const categories = [...new Set([...CATEGORIES, ...counts.keys()])].sort((a, b) => categoryName(a).localeCompare(categoryName(b)));
   chipsEl.replaceChildren(makeChip('all', 'All memes', all.length));
-  categories.filter(category => counts.has(category) || category === state.activeCategory).forEach(category => chipsEl.append(makeChip(category, categoryName(category), counts.get(category) || 0)));
+  categoryChoices()
+    .filter(choice => choice.count > 0 || choice.value === state.activeCategory)
+    .forEach(choice => chipsEl.append(makeChip(choice.value, choice.label, choice.count)));
   if (focusedCategory) [...chipsEl.children].find(button => button.dataset.value === focusedCategory)?.focus({ preventScroll: true });
-  document.getElementById('categoryOptions').replaceChildren(...categories.map(category => new Option(categoryName(category), category)));
   document.getElementById('subtitle').textContent = `${all.length} internal jokes`;
   renderLabelFilters();
 }

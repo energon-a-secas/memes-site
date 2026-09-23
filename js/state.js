@@ -34,6 +34,7 @@ export const state = {
   activeCategory: 'all',
   activeLabels: new Set(),
   organization: {},
+  customCategories: [],        // admin-created names no meme uses yet
   authSubject: null,
   sortBy: 'recent',           // 'recent' | 'default' | 'votes'
   convexMemes: [],
