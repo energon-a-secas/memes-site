@@ -41,3 +41,43 @@ test('legacy memes without labels still match category and text searches', () =>
   assert.equal(selectMemes([{id:1,name:'old-meme',category:'general'}], {query:'old meme'}).length, 1);
   assert.equal(selectMemes([{id:1,name:'old-meme',category:'general'}], {labels:['work']}).length, 0);
 });
+
+test('a typo still finds the meme, but only once the word is long enough to risk one', () => {
+  assert.equal(selectMemes(memes, {query:'simsons'}).length, 2);       // simpsons, one deletion
+  assert.equal(selectMemes(memes, {query:'ofice cat'})[0].id, 3);      // office, one deletion
+  assert.equal(selectMemes(memes, {query:'homerr'})[0].id, 1);
+  assert.equal(selectMemes(memes, {query:'simpsosn'}).length, 2);  // a swapped pair is one typo, not two
+  // Three letters get no allowance at all, or every short word matches everything.
+  assert.equal(selectMemes(memes, {query:'cot'}).length, 0);
+  assert.equal(selectMemes(memes, {query:'zzzzzzzz'}).length, 0);
+});
+
+test('accents fold away in both directions', () => {
+  const accented = [{id:1, name:'mañana-cubre-turno', category:'other-references', labels:['día']}];
+  assert.equal(selectMemes(accented, {query:'manana'}).length, 1);
+  assert.equal(selectMemes(accented, {query:'mañana'}).length, 1);
+  assert.equal(selectMemes(accented, {query:'dia'}).length, 1);
+});
+
+test('a query ranks by where it matched, and the sort control breaks the ties', () => {
+  const ranked = [
+    {id:1, name:'office-party', category:'general', labels:[]},
+    {id:2, name:'homer-donut', category:'general', labels:['office']},
+    {id:3, name:'cat-nap', category:'office-life', labels:[]},
+  ];
+  // Name beats label beats category, whatever order they arrive in.
+  assert.deepEqual(selectMemes(ranked, {query:'office'}).map(m=>m.id), [1, 2, 3]);
+  // An exact token outranks a mere substring of a longer word.
+  assert.deepEqual(selectMemes([
+    {id:1, name:'officer-down', category:'general', labels:[]},
+    {id:2, name:'the-office', category:'general', labels:[]},
+  ], {query:'office'}).map(m=>m.id), [2, 1]);
+  // Without a query the chosen sort is untouched.
+  assert.deepEqual(selectMemes(ranked, {sort:'name'}).map(m=>m.id), [3, 2, 1]);
+});
+
+test('every word must still land somewhere, and the raw slug stays searchable', () => {
+  assert.equal(selectMemes(memes, {query:'homer office'}).length, 0);
+  assert.equal(selectMemes(memes, {query:'homer-at-work'})[0].id, 1);
+  assert.equal(selectMemes(memes, {query:'   '}).length, memes.length);
+});

@@ -330,7 +330,10 @@ function renderGrid(memes) {
     memes.forEach(meme => frag.appendChild(makeCard(meme)));
     grid.appendChild(frag);
   }
-  resultInfo.textContent = `${memes.length} of ${getAllMemes().length} memes${state.activeLabels.size > 1 ? ' · matching all selected labels' : ''}`;
+  const notes = [];
+  if (searchInput.value.trim()) notes.push('best match first');
+  if (state.activeLabels.size > 1) notes.push('matching all selected labels');
+  resultInfo.textContent = `${memes.length} of ${getAllMemes().length} memes${notes.length ? ` · ${notes.join(' · ')}` : ''}`;
 }
 
 export function getFilteredMemes() {
