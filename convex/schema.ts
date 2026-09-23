@@ -39,6 +39,13 @@ export default defineSchema({
     ownerSubject: v.optional(v.string()),
   }),
 
+  // Categories an admin created before any meme uses one. A category that a meme
+  // already carries needs no row here; the fleet of names is the union of both.
+  categories: defineTable({
+    name: v.string(),
+    createdAt: v.number(),
+  }).index("by_name", ["name"]),
+
   // Organization for bundled images, whose files and stable names stay in git.
   memeOrganization: defineTable({
     memeKey: v.string(),

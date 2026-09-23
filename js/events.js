@@ -6,7 +6,7 @@ import { rebuildChips, filterGrid, renderLabelFilters, getFilteredMemes, labelCh
 import { categoryName, validateOrganization } from './organization.js';
 import { createLabelInput } from './label-input.js';
 import { pickerIsOpen } from './picker.js';
-import { createCategoryField } from './categories.js';
+import { createCategoryField, loadCategories, openCategoryAdmin } from './categories.js';
 import { NeoAuth } from './neorgon-auth.js';
 
 // Respect prefers-reduced-motion for JS-driven smooth scrolling.
@@ -166,10 +166,14 @@ async function refreshAdminFlag() {
 
 }
 
+const categoryAdminButton = document.getElementById('categoryAdmin');
+categoryAdminButton.addEventListener('click', event => openCategoryAdmin(event.currentTarget));
+
 function renderAuthState() {
   const loggedIn = !!getLoggedInUser();
   if (uploadZone) uploadZone.style.display = loggedIn ? 'block' : 'none';
   if (uploadLoginPrompt) uploadLoginPrompt.style.display = loggedIn ? 'none' : 'block';
+  categoryAdminButton.hidden = !state.isConvexAdmin;
 }
 
 /** Called once from app.js. */
@@ -517,3 +521,5 @@ window.addEventListener('scroll', () => {
 scrollTopBtn.addEventListener('click', () => {
   window.scrollTo({ top: 0, behavior: scrollBehavior() });
 });
+
+export { loadCategories };

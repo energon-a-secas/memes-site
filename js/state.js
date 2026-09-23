@@ -15,6 +15,7 @@ export const convex = new ConvexHttpClient(CONVEX_URL);
 export const api = {
   memes: { list: "memes:list", getUploadUrl: "memes:getUploadUrl", saveMeme: "memes:saveMeme", deleteMeme: "memes:deleteMeme", organization: "memes:organization", organize: "memes:organize" },
   auth: { isAdmin: "auth:isAdmin" },
+  categories: { list: "categories:list", create: "categories:create", rename: "categories:rename", remove: "categories:remove" },
   votes: { getVotes: "votes:getVotes", toggleVote: "votes:toggleVote" },
 };
 

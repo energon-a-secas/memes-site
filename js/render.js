@@ -76,7 +76,7 @@ export function allLabels() {
 export function categoryChoices() {
   const counts = new Map();
   getAllMemes().forEach(meme => counts.set(meme.category, (counts.get(meme.category) || 0) + 1));
-  const names = new Set([...CATEGORIES, ...counts.keys()]);
+  const names = new Set([...CATEGORIES, ...counts.keys(), ...state.customCategories]);
   return [...names]
     .map(value => ({ value, label: categoryName(value), count: counts.get(value) || 0 }))
     .sort((a, b) => a.label.localeCompare(b.label));
