@@ -11,7 +11,7 @@ import { MEMES } from './data.js';
 const CONVEX_URL = "https://polite-jellyfish-291.convex.cloud";
 export const convex = new ConvexHttpClient(CONVEX_URL);
 
-// Function references (strings at runtime — no build step needed)
+// Function references (strings at runtime, so no build step is needed)
 export const api = {
   memes: { list: "memes:list", getUploadUrl: "memes:getUploadUrl", saveMeme: "memes:saveMeme", deleteMeme: "memes:deleteMeme", organization: "memes:organization", organize: "memes:organize" },
   auth: { isAdmin: "auth:isAdmin" },

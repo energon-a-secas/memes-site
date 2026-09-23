@@ -1,7 +1,7 @@
 // ── Event handlers ───────────────────────────────────────────────────
 import { MEMES } from './data.js';
 import { state, convex, api, visitorId, getAllMemes, getLoggedInUser, setAuthSession, canOrganize } from './state.js';
-import { showToast, formatName, copyMemeUrl, copyMemeImage, downloadMeme } from './utils.js';
+import { showToast, formatName, copyMemeUrl, copyMemeImage, downloadMeme, errorMessage } from './utils.js';
 import { rebuildChips, filterGrid, renderLabelFilters, getFilteredMemes, allLabels } from './render.js';
 import { categoryName, validateOrganization } from './organization.js';
 import { createLabelInput } from './label-input.js';
@@ -64,7 +64,7 @@ export async function loadOrganization() {
 export async function loadVotes({ render = true } = {}) {
   try {
     const { counts, upvoted, downvoted } = await convex.query(api.votes.getVotes, { visitorId });
-    state.voteCounts = counts;
+    state.voteCounts = Object.fromEntries(counts);
     state.myVotes = new Set(upvoted);
     state.myDownvotes = new Set(downvoted);
     if (render) { filterGrid(); }
@@ -117,7 +117,7 @@ export async function handleDeleteMeme(memeId, memeName) {
       showToast(result.error);
     }
   } catch (e) {
-    showToast('Delete failed: ' + e.message);
+    showToast(errorMessage(e, 'Delete failed. Please try again.'));
   }
 }
 
@@ -279,7 +279,10 @@ uploadSubmit.addEventListener('click', async () => {
 
     await loadConvexMemes();
   } catch (e) {
-    uploadError.textContent = 'Upload failed. Your details are still here; please try again.';
+    // Loud on purpose: for a week every upload died on a server-side argument
+    // error that reached neither the person nor the console.
+    console.error('Upload failed:', e);
+    uploadError.textContent = errorMessage(e, 'The upload did not go through. Your details are still here; please try again.');
   }
 
   uploadSubmit.disabled = false;
@@ -389,7 +392,8 @@ organizeForm.addEventListener('submit', async event => {
     renderLightboxOrganization();
     showToast('Category and labels saved');
   } catch (error) {
-    organizeError.textContent = 'Could not save changes. Your edits are still here; please try again.';
+    console.error('Organize failed:', error);
+    organizeError.textContent = errorMessage(error, 'Could not save changes. Your edits are still here; please try again.');
   } finally {
     savingOrganization = false;
     organizeFields.disabled = false;

@@ -1,7 +1,8 @@
 import { query, mutation } from "./_generated/server";
-import { v } from "convex/values";
+import { v, ConvexError } from "convex/values";
 import { MEMES } from "../js/data.js";
 import { validateOrganization } from "../js/organization.js";
+import { isAdminIdentity, surfaced } from "./admin";
 
 export const list = query({
   args: {},
@@ -26,7 +27,7 @@ export const getUploadUrl = mutation({
   args: {},
   handler: async (ctx) => {
     const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Not authenticated");
+    if (!identity) throw new ConvexError("Sign in to upload a meme.");
     return await ctx.storage.generateUploadUrl();
   },
 });
@@ -38,11 +39,7 @@ export const deleteMeme = mutation({
     if (!identity) {
       return { ok: false, error: "Not authenticated" };
     }
-    const admins = (process.env.ADMIN_SUBJECTS || "")
-      .split(",")
-      .map((s) => s.trim())
-      .filter(Boolean);
-    if (!admins.includes(identity.subject)) {
+    if (!isAdminIdentity(identity)) {
       return { ok: false, error: "Not authorized" };
     }
     const meme = await ctx.db.get(args.memeId);
@@ -64,8 +61,8 @@ export const saveMeme = mutation({
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Not authenticated");
-    const organization = validateOrganization(args.category, args.labels || []);
+    if (!identity) throw new ConvexError("Sign in to upload a meme.");
+    const organization = surfaced(() => validateOrganization(args.category, args.labels || []));
     const uploadedBy =
       (identity.name && String(identity.name).trim()) ||
       (identity.email && identity.email.split("@")[0]) ||
@@ -98,17 +95,17 @@ export const organize = mutation({
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Sign in to organize memes.");
-    const isAdmin = (process.env.ADMIN_SUBJECTS || "").split(",").map(s => s.trim()).includes(identity.subject);
-    const values = validateOrganization(args.category, args.labels);
+    if (!identity) throw new ConvexError("Sign in to organize memes.");
+    const isAdmin = isAdminIdentity(identity);
+    const values = surfaced(() => validateOrganization(args.category, args.labels));
     if (args.memeId) {
       const meme = await ctx.db.get(args.memeId);
-      if (!meme) throw new Error("This meme is no longer available.");
-      if (!isAdmin && meme.ownerSubject !== identity.subject) throw new Error("Only the uploader or an admin can organize this meme.");
+      if (!meme) throw new ConvexError("This meme is no longer available.");
+      if (!isAdmin && meme.ownerSubject !== identity.subject) throw new ConvexError("Only the uploader or an admin can organize this meme.");
       await ctx.db.patch(args.memeId, values);
     } else {
-      if (!isAdmin) throw new Error("Only admins can organize the bundled collection.");
-      if (!MEMES.some(meme => meme.name === args.memeKey)) throw new Error("Meme not found.");
+      if (!isAdmin) throw new ConvexError("Only admins can organize the bundled collection.");
+      if (!MEMES.some(meme => meme.name === args.memeKey)) throw new ConvexError("Meme not found.");
       const existing = await ctx.db.query("memeOrganization").withIndex("by_meme", q => q.eq("memeKey", args.memeKey)).unique();
       if (existing) await ctx.db.patch(existing._id, values);
       else await ctx.db.insert("memeOrganization", { memeKey: args.memeKey, ...values });

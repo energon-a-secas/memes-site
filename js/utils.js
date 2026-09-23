@@ -40,7 +40,7 @@ export async function copyMemeUrl(path) {
 
 /**
  * Copy a non-GIF meme image to the clipboard as a PNG blob.
- * GIFs/webp cannot be clipboard-copied — callers should fall back to download.
+ * GIFs/webp cannot be clipboard-copied, so callers fall back to download.
  */
 export async function copyMemeImage(path, ext, isCrossOrigin) {
   if (ext === 'gif' || ext === 'webp') {
@@ -65,4 +65,17 @@ export async function copyMemeImage(path, ext, isCrossOrigin) {
   } catch {
     showToast('Copy failed. Try Download instead');
   }
+}
+
+/**
+ * The message a person should see for a failed Convex call.
+ *
+ * A production deployment masks a thrown Error as "Server Error", so only a
+ * ConvexError carries anything readable, and it arrives on `.data`. Anything
+ * else is a bug or a network fault and gets the caller's fallback rather than
+ * an opaque string with a request id in it.
+ */
+export function errorMessage(error, fallback) {
+  const data = error?.data;
+  return typeof data === 'string' && data.trim() ? data : fallback;
 }

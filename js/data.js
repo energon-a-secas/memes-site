@@ -108,7 +108,7 @@ export const MEMES = [
   { name: "two-buttons", category: "templates", path: "assets/images/templates/two-buttons.jpg", ext: "jpg", id: 83 },
   { name: "visualising-in-the-mirror", category: "templates", path: "assets/images/templates/visualising-in-the-mirror.png", ext: "png", id: 84 },
 
-  // ── uncategorized (2 — root-level images) ──────────────────────────
+  // ── uncategorized (2 root-level images) ───────────────────────────
   { name: "cyberpunk-dog", category: "general", path: "assets/images/cyberpunk-dog.png", ext: "png", id: 85 },
   { name: "patrick-seahorse", category: "general", path: "assets/images/patrick-seahorse.gif", ext: "gif", id: 86 },
 ];
