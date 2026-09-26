@@ -20,7 +20,8 @@ async function fixture(page, {admin = false, signedIn = true} = {}) {
         if(name==='memes:list') return f.memes;
         if(name==='memes:organization') return f.organization;
         if(name==='auth:isAdmin') return f.admin;
-        if(name==='votes:getVotes') return {counts:{},upvoted:[],downvoted:[]};
+        if(name==='votes:getVotes') return {counts:[],upvoted:[],downvoted:[]};
+        if(name==='categories:list') return [];
       }
       async mutation(name,args) {
         const f=window.fixture;
@@ -50,6 +51,14 @@ async function fixture(page, {admin = false, signedIn = true} = {}) {
   await expect(page.locator('#resultInfo')).toHaveText('88 of 88 memes');
 }
 
+async function chooseCategory(page, field, value) {
+  await page.locator(field).click();
+  const picker = page.locator('dialog.picker[open]');
+  await picker.locator('.picker-create-input').fill(value);
+  await picker.locator('.picker-create-submit').click();
+  await expect(picker).toBeHidden();
+}
+
 test('search, labels and categories combine and reset', async ({page}) => {
   await fixture(page);
   await page.locator('#labelFilters').getByRole('button',{name:'reaction'}).click();
@@ -70,7 +79,7 @@ test('owner edits category and labels, which survive a reload', async ({page}) =
   await fixture(page);
   await page.getByRole('button',{name:'Organize Team Reaction',exact:true}).click();
   await expect(page.locator('#organizeForm')).toBeVisible();
-  await page.locator('#organizeCategory').fill('Team Jokes');
+  await chooseCategory(page, '#organizeCategory', 'Team Jokes');
   await page.getByRole('button',{name:'Remove label work',exact:true}).click();
   await page.locator('#organizeLabelsInput').fill('#Reaction, office, OFFICE');
   await page.getByRole('button',{name:'Save changes',exact:true}).click();
@@ -87,7 +96,7 @@ test('owner edits category and labels, which survive a reload', async ({page}) =
 test('failed saves preserve edits, then retry; keyboard editing does not navigate', async ({page}) => {
   await fixture(page);
   await page.getByRole('button',{name:'Organize Team Reaction',exact:true}).click();
-  await page.locator('#organizeCategory').fill('Office');
+  await chooseCategory(page, '#organizeCategory', 'Office');
   await page.locator('#organizeCategory').press('ArrowLeft');
   await expect(page.locator('#lightboxName')).toHaveText('Team Reaction');
   await page.locator('#organizeLabelsInput').fill('a'.repeat(33));
@@ -97,7 +106,7 @@ test('failed saves preserve edits, then retry; keyboard editing does not navigat
   await page.evaluate(()=>window.fixture.fail=true);
   await page.getByRole('button',{name:'Save changes',exact:true}).click();
   await expect(page.locator('#organizeError')).toContainText('Could not save');
-  await expect(page.locator('#organizeCategory')).toHaveValue('Office');
+  await expect(page.locator('#organizeCategory')).toContainText('Office');
   await expect(page.getByRole('button',{name:'Remove label inside joke'})).toBeVisible();
   await page.evaluate(()=>window.fixture.fail=false);
   await page.getByRole('button',{name:'Save changes',exact:true}).click();
@@ -107,7 +116,7 @@ test('failed saves preserve edits, then retry; keyboard editing does not navigat
 test('custom metadata renders as text and labels can be removed', async ({page}) => {
   await fixture(page);
   await page.getByRole('button',{name:'Organize Team Reaction',exact:true}).click();
-  await page.locator('#organizeCategory').fill('<svg onload=alert(1)>');
+  await chooseCategory(page, '#organizeCategory', '<svg onload=alert(1)>');
   await page.getByRole('button',{name:'Remove label work',exact:true}).click();
   await page.getByRole('button',{name:'Remove label reaction',exact:true}).click();
   await page.locator('#organizeLabelsInput').fill('<img src=x onerror=alert(1)>');
@@ -121,7 +130,7 @@ test('uploads include custom categories and pending labels', async ({page}) => {
   await page.locator('#uploadToggle').click();
   await page.locator('#fileInput').setInputFiles(resolve(IMAGE));
   await page.locator('#memeNameInput').fill('a-new-joke');
-  await page.locator('#memeCatSelect').fill('Office Life');
+  await chooseCategory(page, '#memeCatSelect', 'Office Life');
   await page.locator('#uploadLabelsInput').fill('work, funny');
   await page.locator('#uploadSubmit').click();
   await expect(page.locator('#uploadPreview')).toBeHidden();
@@ -132,7 +141,7 @@ test('uploads include custom categories and pending labels', async ({page}) => {
 test('admin organizes bundled memes; other owners are read-only', async ({page}) => {
   await fixture(page, {admin:true});
   await page.getByRole('button',{name:'Organize Aun Me Queda El Panda',exact:true}).click();
-  await page.locator('#organizeCategory').fill('Pandas');
+  await chooseCategory(page, '#organizeCategory', 'Pandas');
   await page.getByRole('button',{name:'Save changes',exact:true}).click();
   await expect(page.locator('#lightboxTaxonomy')).toContainText('Pandas');
   expect(await page.evaluate(()=>window.fixture.calls.at(-1).args.memeId)).toBeUndefined();
@@ -154,12 +163,12 @@ test('mobile filters, viewer and keyboard focus fit the screen', async ({page}) 
   await page.locator('.card-organize').first().click();
   await expect(page.locator('#lightbox')).toHaveCSS('opacity','1');
   await expect(page.locator('#lightbox')).toBeVisible();
-  await page.keyboard.press('Shift+Tab');
+  await page.evaluate(()=>document.querySelector('#searchInput').focus());
   expect(await page.evaluate(()=>document.querySelector('#lightbox').contains(document.activeElement))).toBe(true);
   expect(await page.evaluate(()=>document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   await page.screenshot({path:'test-results/mobile-viewer.png'});
   await page.keyboard.press('Escape');
-  await expect(page.locator('#lightbox')).toHaveAttribute('inert','');
+  await expect(page.locator('#lightbox')).not.toHaveAttribute('open');
 });
 
 test('anonymous visitors can browse and see how to organize', async ({page}) => {
@@ -169,4 +178,17 @@ test('anonymous visitors can browse and see how to organize', async ({page}) => 
   await page.locator('#organizeToggle').click();
   expect(await page.evaluate(()=>window.fixture.signInRequested)).toBe(true);
   expect(await page.evaluate(()=>window.fixture.calls.length)).toBe(0);
+});
+
+test('Escape closes the category picker while keeping the viewer and draft open', async ({page}) => {
+  await fixture(page);
+  await page.getByRole('button',{name:'Organize Team Reaction',exact:true}).click();
+  await page.locator('#organizeLabelsInput').fill('still editing');
+  await page.locator('#organizeCategory').click();
+  await expect(page.locator('dialog.picker[open]')).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(page.locator('dialog.picker[open]')).toHaveCount(0);
+  await expect(page.locator('#lightbox')).toHaveAttribute('open');
+  await expect(page.locator('#organizeLabelsInput')).toHaveValue('still editing');
+  await expect(page.locator('#organizeCategory')).toBeFocused();
 });

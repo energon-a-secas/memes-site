@@ -3,6 +3,7 @@ import { CATEGORIES, MEMES } from './data.js';
 import { state, getAllMemes } from './state.js';
 import { formatName, copyMemeImage, downloadMeme } from './utils.js';
 import { categoryName, selectMemes } from './organization.js';
+import { navigation } from './url-sync.js';
 import { openLightbox, handleVoteClick, handleDeleteMeme } from './events.js';
 
 // ── Meme of the Day ─────────────────────────────────────────────────
@@ -48,7 +49,7 @@ const searchInput = document.getElementById('searchInput');
 
 // Category navigation and label filters use text nodes for user-created names.
 export function chooseCategory(value) {
-  state.activeCategory = value;
+  navigation.push(() => { state.activeCategory = value; });
   rebuildChips();
   filterGrid();
 }
@@ -76,7 +77,7 @@ export function allLabels() {
 export function categoryChoices() {
   const counts = new Map();
   getAllMemes().forEach(meme => counts.set(meme.category, (counts.get(meme.category) || 0) + 1));
-  const names = new Set([...CATEGORIES, ...counts.keys(), ...state.customCategories]);
+  const names = new Set([...CATEGORIES, ...counts.keys(), ...state.customCategories, ...(state.activeCategory === 'all' ? [] : [state.activeCategory])]);
   return [...names]
     .map(value => ({ value, label: categoryName(value), count: counts.get(value) || 0 }))
     .sort((a, b) => a.label.localeCompare(b.label));
@@ -104,15 +105,17 @@ export function rebuildChips() {
 }
 
 export function toggleLabel(label) {
-  if (state.activeLabels.has(label)) state.activeLabels.delete(label);
-  else state.activeLabels.add(label);
+  navigation.push(() => {
+    if (state.activeLabels.has(label)) state.activeLabels.delete(label);
+    else state.activeLabels.add(label);
+  });
   filterGrid();
 }
 
 export function renderLabelFilters() {
   const root = document.getElementById('labelFilters');
   const focusedLabel = root.contains(document.activeElement) ? document.activeElement.dataset.label : null;
-  const labels = allLabels();
+  const labels = [...new Set([...allLabels(), ...state.activeLabels])].sort();
   const query = document.getElementById('labelSearch').value.trim().toLowerCase();
   const available = getAllMemes().filter(meme => state.activeCategory === 'all' || meme.category === state.activeCategory);
   document.getElementById('labelTotal').textContent = labels.length || '';
@@ -142,8 +145,11 @@ export function renderLabelFilters() {
 }
 
 export function resetFilters() {
-  state.activeCategory = 'all';
-  state.activeLabels.clear();
+  navigation.push(() => {
+    state.activeCategory = 'all';
+    state.activeLabels.clear();
+    state.searchQuery = '';
+  });
   searchInput.value = '';
   document.getElementById('labelSearch').value = '';
   rebuildChips();
@@ -165,7 +171,11 @@ function renderActiveFilters() {
   };
   if (state.activeCategory !== 'all') add(categoryName(state.activeCategory), () => chooseCategory('all'));
   state.activeLabels.forEach(label => add(label, () => toggleLabel(label)));
-  if (searchInput.value.trim()) add(`“${searchInput.value.trim()}”`, () => { searchInput.value = ''; filterGrid(); });
+  if (state.searchQuery.trim()) add(`“${state.searchQuery.trim()}”`, () => {
+    navigation.push(() => { state.searchQuery = ''; });
+    searchInput.value = '';
+    filterGrid();
+  });
   root.hidden = !root.childElementCount;
   if (!root.hidden) {
     const clear = document.createElement('button');
@@ -354,7 +364,7 @@ function renderGrid(memes) {
 }
 
 export function getFilteredMemes() {
-  return selectMemes(getAllMemes(), { category: state.activeCategory, labels: [...state.activeLabels], query: searchInput.value, sort: state.sortBy, votes: state.voteCounts });
+  return selectMemes(getAllMemes(), { category: state.activeCategory, labels: [...state.activeLabels], query: state.searchQuery, sort: state.sortBy, votes: state.voteCounts });
 }
 
 export function filterGrid() {

@@ -1,7 +1,7 @@
 // ── Shared picker popup ──────────────────────────────────────────────
 // One dialog backs the category field, the label browser and the admin
-// category manager. It is appended to <body>, never to <main>: openLightbox()
-// sets main.inert, which is exactly what silenced the <datalist> this replaces.
+// category manager. It is appended to <body> and opened in the native top layer,
+// above the viewer. The viewer stays open while the picker owns keyboard focus.
 const fold = text => text.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
 
 let dialog = null;

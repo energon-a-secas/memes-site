@@ -1,15 +1,15 @@
 // ── Entry point ──────────────────────────────────────────────────────
 
 import { rebuildChips, filterGrid, renderMemeOfTheDay } from './render.js';
-import { loadConvexMemes, loadVotes, loadOrganization, loadCategories, initMemesAuth } from './events.js';
+import { loadRemoteData, initMemesAuth } from './events.js';
+import { restoreBrowseState, navigation } from './url-sync.js';
 
+restoreBrowseState();
+navigation.replace();
 rebuildChips();
 filterGrid();
 renderMemeOfTheDay();
 
-loadConvexMemes();
-loadVotes();
-loadOrganization();
-loadCategories();
+void loadRemoteData();
 
-initMemesAuth();
+void initMemesAuth().catch(() => {});

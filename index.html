@@ -74,12 +74,14 @@
       </a>
     </div>
     <div class="header-right">
-      <nav class="header-actions">
+      <nav class="header-actions" aria-label="Meme actions">
         <button class="nav-link nav-link--random" id="randomBtn" title="Random meme">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;margin-right:4px"><polyline points="16 3 21 3 21 8"/><line x1="4" y1="20" x2="21" y2="3"/><polyline points="21 16 21 21 16 21"/><line x1="15" y1="15" x2="21" y2="21"/><line x1="4" y1="4" x2="9" y2="9"/></svg>
           <span>Random</span>
         </button>
         <button data-keep-mobile type="button" class="nav-link nav-link--upload" id="uploadToggle" aria-expanded="false" aria-controls="uploadPanel">Upload</button>
+        <button type="button" class="nav-link" id="shareView">Share view</button>
+        <button type="button" class="nav-link" id="refreshCollection">Refresh</button>
     
       </nav>
       <div class="neo-auth" data-neo-auth data-keep-mobile hidden></div>
@@ -97,7 +99,7 @@
     </div>
   </header>
 
-  <main class="container" id="main">
+  <main class="container" id="main" tabindex="-1">
 
     <!-- Upload panel -->
     <div class="upload-panel" id="uploadPanel">
@@ -156,7 +158,7 @@
       <section class="library-content" aria-label="Meme collection">
         <div class="search-wrap">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-          <input id="searchInput" type="search" placeholder="Search memes, categories, labels…" aria-label="Search memes, categories and labels" autocomplete="off">
+          <input id="searchInput" type="search" placeholder="Search memes, categories, labels…" aria-label="Search memes, categories and labels" autocomplete="off" maxlength="300">
           <kbd class="search-shortcut" aria-hidden="true">/</kbd>
         </div>
         <div class="toolbar-row">
@@ -164,13 +166,17 @@
           <div class="sort-controls"><label class="sort-label" for="sortSelect">Sort by</label><select id="sortSelect" class="sort-select"><option value="recent" selected>Recently added</option><option value="votes">Most voted</option><option value="name">Name, A–Z</option><option value="default">Collection order</option></select></div>
         </div>
         <div class="active-filters" id="activeFilters" aria-label="Active filters" hidden></div>
+        <div class="remote-status" id="remoteStatus" hidden>
+          <p id="remoteMessage" role="status" aria-live="polite"></p>
+          <button type="button" class="text-button" id="retryCollection" hidden>Try again</button>
+        </div>
         <div class="meme-grid" id="memeGrid" role="list" aria-label="Memes"></div>
       </section>
     </div>
   </main>
 
   <!-- Lightbox -->
-  <div class="lightbox" id="lightbox" role="dialog" aria-modal="true" aria-label="Meme viewer" aria-hidden="true" inert>
+  <dialog class="lightbox" id="lightbox" aria-label="Meme viewer">
     <button class="lightbox-close" id="lightboxClose" aria-label="Close">&times;</button>
     <button class="lightbox-nav lightbox-prev" id="lbPrev" aria-label="Previous">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
@@ -215,16 +221,12 @@
         </div>
       </div>
     </div>
-  </div>
+  </dialog>
 
   <footer class="neo-footer" data-footer-mode="minimal">
   </footer>
 
   <div id="toast" role="status" aria-live="polite" aria-atomic="true"></div>
-
-  <button class="scroll-top" id="scrollTop" aria-label="Scroll to top">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
-  </button>
 
   <script type="module" src="js/app.js"></script>
 

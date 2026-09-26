@@ -4,12 +4,8 @@
 import { safeGet, safeSet } from './neorgon-persist.js';
 
 // ── Shared mutable state + Convex client ─────────────────────────────
-import { ConvexHttpClient } from "https://esm.sh/convex@1.21.0/browser";
+export { convex } from './client.js';
 import { MEMES } from './data.js';
-
-// ── Convex client ────────────────────────────────────────────────────
-const CONVEX_URL = "https://polite-jellyfish-291.convex.cloud";
-export const convex = new ConvexHttpClient(CONVEX_URL);
 
 // Function references (strings at runtime, so no build step is needed)
 export const api = {
@@ -32,6 +28,7 @@ export const visitorId = getVisitorId();
 
 // ── Mutable application state ────────────────────────────────────────
 export const state = {
+  searchQuery: '',
   activeCategory: 'all',
   activeLabels: new Set(),
   organization: {},

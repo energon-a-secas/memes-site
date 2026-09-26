@@ -5,6 +5,7 @@ import { categoryChoices, rebuildChips, filterGrid } from './render.js';
 import { loadConvexMemes, loadOrganization } from './events.js';
 import { categoryName, validateCategory, MAX_CATEGORY_LENGTH } from './organization.js';
 import { showToast, errorMessage } from './utils.js';
+import { loadResource } from './remote-data.js';
 
 /** Turn a button into a category field backed by the picker popup. */
 export function createCategoryField(button, { value = 'general' } = {}) {
@@ -48,12 +49,11 @@ export function createCategoryField(button, { value = 'general' } = {}) {
 }
 
 export async function loadCategories() {
-  try {
-    state.customCategories = await convex.query(api.categories.list, {});
+  await loadResource('Categories', api.categories.list, {}, rows => {
+    if (!Array.isArray(rows)) throw new Error('Invalid categories');
+    state.customCategories = rows;
     rebuildChips();
-  } catch (error) {
-    console.warn('Categories not available:', error.message);
-  }
+  });
 }
 
 // ── Admin manager ────────────────────────────────────────────────────

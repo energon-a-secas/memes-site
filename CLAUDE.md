@@ -16,11 +16,11 @@ Both `make dev` (terminal 1) and `make serve` (terminal 2) must run simultaneous
 
 ## Architecture
 
-**Dual meme source:** The collection merges 67 hardcoded memes from `js/data.js` (static files in `assets/images/`) with dynamically uploaded memes from Convex storage. `getAllMemes()` in `state.js` concatenates both. Hardcoded memes are never voteable by `_id`, vote keys use `meme.name` (a slug string) for both static and Convex memes.
+**Dual meme source:** The collection merges bundled memes from `js/data.js` (static files in `assets/images/`) with dynamically uploaded memes from Convex storage. `getAllMemes()` in `state.js` concatenates both. Hardcoded memes are never voteable by `_id`, vote keys use `meme.name` (a slug string) for both static and Convex memes.
 
-**Startup sequence:** `app.js` renders immediately from hardcoded data, then fires two async Convex fetches (`loadConvexMemes`, `loadVotes`) that re-render when they resolve. This means the UI is usable without Convex being available.
+**Startup sequence:** `app.js` renders immediately from hardcoded data, then independently loads community memes, organization metadata, votes and categories. `client.js` dynamically imports the optional SDK, so even a stalled SDK cannot block the bundled collection. Public reads time out after 12 seconds; partial failures expose a retry and keep the last successful result. Authentication initializes separately.
 
-**Convex client without build step:** `state.js` imports `ConvexHttpClient` from the ESM CDN and stores it as `export const convex`. All API calls use string-based function names via `export const api = { memes: { list: "memes:list", ... }, ... }`. No generated client types needed.
+**Convex client without build step:** `client.js` lazily creates `ConvexHttpClient` from the ESM CDN; `state.js` re-exports its facade. The facade retains account tokens that arrive before the SDK and forwards writes through the same API. All API calls use string-based function names via `export const api = { memes: { list: "memes:list", ... }, ... }`. No generated client types needed.
 
 **Vote dedup:** Votes are tied to a `visitorId` (UUID stored in `localStorage` under `meme-vault-visitor`), not to user accounts. Logged-in users and anonymous visitors all vote by `visitorId`. The `votes` table has `by_visitor_meme` index for fast per-visitor lookups.
 
@@ -47,3 +47,24 @@ Both `make dev` (terminal 1) and `make serve` (terminal 2) must run simultaneous
 ## Adding Hardcoded Memes
 
 Add an entry to the appropriate category array in `js/data.js` and place the image in `assets/images/<category>/`. The `id` must be sequentially unique across all entries. Categories are listed in `export const CATEGORIES` at the bottom of `data.js`.
+
+## Browsing and shared shell
+
+`url-sync.js` owns `q`, `cat`, repeated `label` values and `sort`. Custom category
+and label filters survive before remote metadata arrives. Search replaces the
+current history entry; category/label/sort changes push entries; Back/Forward
+restores both controls and results. Theme parameters, attribution and fragments
+stay intact. Share view copies this URL.
+
+`js/neorgon-navigation.js` is vendored from `packages/neorgon-ui/navigation/`;
+change canonical and run `bash packages/neorgon-ui/sync-navigation.sh`. Background
+rendering and resource callbacks never write navigation history.
+
+The viewer is a native dialog. A category/label picker opens above it and handles
+its own Escape; closing the picker keeps the viewer draft. The Footer Kit owns
+back-to-top, with no second site-specific floating control.
+
+Run `npm test` for taxonomy, backend and URL rules, and `npm run test:ui` for
+fixture-backed uploads, editing, failed saves and dialog focus. The workspace
+`node scripts/check-collection-pilots.cjs` also checks delayed SDK/auth, shareable
+filters, partial failures and the shared header/footer contract.

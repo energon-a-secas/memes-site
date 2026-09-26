@@ -8,6 +8,8 @@ import { createLabelInput } from './label-input.js';
 import { pickerIsOpen } from './picker.js';
 import { createCategoryField, loadCategories, openCategoryAdmin } from './categories.js';
 import { NeoAuth } from './neorgon-auth.js';
+import { loadResource } from './remote-data.js';
+import { restoreBrowseState, navigation } from './url-sync.js';
 
 // Respect prefers-reduced-motion for JS-driven smooth scrolling.
 const prefersReducedMotion = () =>
@@ -16,7 +18,11 @@ const scrollBehavior = () => (prefersReducedMotion() ? 'auto' : 'smooth');
 
 // ── Search input ─────────────────────────────────────────────────────
 const searchInput = document.getElementById('searchInput');
-searchInput.addEventListener('input', filterGrid);
+searchInput.addEventListener('input', () => {
+  state.searchQuery = searchInput.value;
+  filterGrid();
+  navigation.schedule();
+});
 document.getElementById('labelSearch').addEventListener('input', renderLabelFilters);
 document.getElementById('filterToggle').addEventListener('click', event => {
   const open = document.getElementById('filterContents').classList.toggle('expanded');
@@ -24,7 +30,7 @@ document.getElementById('filterToggle').addEventListener('click', event => {
   event.currentTarget.textContent = open ? 'Filters −' : 'Filters +';
 });
 /** A modal dialog runs its own keyboard; the page's shortcuts must not fight it. */
-const dialogIsOpen = () => pickerIsOpen() || !!document.querySelector('dialog[open]');
+const dialogIsOpen = () => pickerIsOpen() || !!document.querySelector('dialog[open]:not(#lightbox)');
 
 document.addEventListener('keydown', event => {
   if (event.key === '/' && !dialogIsOpen() && !/INPUT|TEXTAREA|SELECT/.test(event.target.tagName) && !event.target.isContentEditable && !document.getElementById('lightbox').classList.contains('open')) {
@@ -36,46 +42,62 @@ document.addEventListener('keydown', event => {
 // ── Sort control ─────────────────────────────────────────────────────
 const sortSelect = document.getElementById('sortSelect');
 sortSelect.addEventListener('change', () => {
-  state.sortBy = sortSelect.value;
+  navigation.push(() => { state.sortBy = sortSelect.value; });
   filterGrid();
 });
 
+navigation.listen(() => {
+  if (lightbox.open) closeLightbox();
+  restoreBrowseState();
+  rebuildChips();
+  filterGrid();
+});
+document.getElementById('shareView').addEventListener('click', async () => {
+  navigation.replace();
+  try {
+    await navigator.clipboard.writeText(location.href);
+    showToast('Link copied with your search and filters');
+  } catch { showToast('Could not copy. Copy the address from your browser.'); }
+});
+for (const id of ['refreshCollection', 'retryCollection']) {
+  document.getElementById(id).addEventListener('click', () => {
+    searchInput.focus();
+    void loadRemoteData();
+  });
+}
+export async function loadRemoteData() {
+  await Promise.all([loadConvexMemes(), loadOrganization(), loadVotes(), loadCategories()]);
+}
+
 // ── Convex: load remote memes ────────────────────────────────────────
 export async function loadConvexMemes({ render = true } = {}) {
-  try {
-    const results = await convex.query(api.memes.list);
+  await loadResource('Community memes', api.memes.list, {}, results => {
+    if (!Array.isArray(results)) throw new Error('Invalid collection');
     state.convexMemes = results;
     if (render) { rebuildChips(); filterGrid(); }
     const total = MEMES.length + state.convexMemes.length;
     document.getElementById('subtitle').textContent = `${total} internal jokes`;
 
-  } catch (e) {
-    console.warn('Convex not available:', e.message);
-  }
+  });
 }
 
 export async function loadOrganization() {
-  try {
-    const rows = await convex.query(api.memes.organization, {});
+  await loadResource('Meme labels', api.memes.organization, {}, rows => {
+    if (!Array.isArray(rows)) throw new Error('Invalid labels');
     state.organization = Object.fromEntries(rows.map(row => [row.memeKey, { category: row.category, labels: row.labels }]));
     rebuildChips();
     filterGrid();
-  } catch (error) {
-    console.warn('Organization not available:', error.message);
-  }
+  });
 }
 
 // ── Convex: load votes ───────────────────────────────────────────────
 export async function loadVotes({ render = true } = {}) {
-  try {
-    const { counts, upvoted, downvoted } = await convex.query(api.votes.getVotes, { visitorId });
+  await loadResource('Votes', api.votes.getVotes, { visitorId }, ({ counts, upvoted, downvoted }) => {
     state.voteCounts = Object.fromEntries(counts);
     state.myVotes = new Set(upvoted);
     state.myDownvotes = new Set(downvoted);
     if (render) { filterGrid(); }
-  } catch (e) {
-    console.warn('Votes not available:', e.message);
-  }
+  });
 }
 
 /** Handle a vote toggle (direction: +1 upvote, -1 downvote). */
@@ -425,13 +447,8 @@ export function openLightbox(meme, { organize = false } = {}) {
   const index = currentList.findIndex(matches);
   setLightboxMeme(meme, index >= 0 ? index : 0);
   lightboxReturnFocus = document.activeElement;
-  lightbox.inert = false;
   lightbox.classList.add('open');
-  lightbox.setAttribute('aria-hidden', 'false');
-  document.querySelector('main').inert = true;
-  document.querySelector('header').inert = true;
-  document.querySelector('footer').inert = true;
-  document.getElementById('scrollTop').inert = true;
+  if (!lightbox.open) lightbox.showModal();
   document.body.style.overflow = 'hidden';
   lbClose.focus();
   if (organize && canOrganize(meme)) beginOrganizing();
@@ -440,16 +457,12 @@ export function openLightbox(meme, { organize = false } = {}) {
 function closeLightbox() {
   if (savingOrganization) return;
   lightbox.classList.remove('open');
-  lightbox.setAttribute('aria-hidden', 'true');
-  lightbox.inert = true;
-  document.querySelector('main').inert = false;
-  document.querySelector('header').inert = false;
-  document.querySelector('footer').inert = false;
-  document.getElementById('scrollTop').inert = false;
+  if (lightbox.open) lightbox.close();
   document.body.style.overflow = '';
   currentMeme = null;
   currentIndex = -1;
-  if (lightboxReturnFocus?.isConnected) lightboxReturnFocus.focus();
+  if (lightboxReturnFocus?.isConnected && lightboxReturnFocus.getClientRects().length) lightboxReturnFocus.focus();
+  else if (lightboxReturnFocus?.closest('.header-overflow-menu')) document.querySelector('.header-overflow-toggle')?.focus();
   else searchInput.focus();
   lightboxReturnFocus = null;
 }
@@ -461,6 +474,11 @@ function navigateLightbox(dir) {
 }
 
 lbClose.addEventListener('click', closeLightbox);
+lightbox.addEventListener('cancel', event => {
+  event.preventDefault();
+  event.stopPropagation();
+  closeLightbox();
+});
 lbPrev.addEventListener('click', (e) => { e.stopPropagation(); navigateLightbox(-1); });
 lbNext.addEventListener('click', (e) => { e.stopPropagation(); navigateLightbox(1); });
 
@@ -482,27 +500,9 @@ lbDownload.addEventListener('click', () => {
 
 document.addEventListener('keydown', (e) => {
   if (!lightbox.classList.contains('open') || dialogIsOpen()) return;
-  if (e.key === 'Escape') { closeLightbox(); return; }
   const editing = /INPUT|TEXTAREA|SELECT/.test(e.target.tagName);
   if (!editing && organizeForm.hidden && e.key === 'ArrowLeft')  { navigateLightbox(-1); return; }
   if (!editing && organizeForm.hidden && e.key === 'ArrowRight') { navigateLightbox(1); return; }
-  if (e.key === 'Tab') {
-    // Trap focus among the lightbox's interactive controls.
-    const focusable = [...lightbox.querySelectorAll('button:not(:disabled), input:not(:disabled), select:not(:disabled)')].filter(element => element.getClientRects().length > 0);
-    if (!focusable.length) return;
-    const first = focusable[0];
-    const last = focusable[focusable.length - 1];
-    if (e.shiftKey && document.activeElement === first) {
-      e.preventDefault();
-      last.focus();
-    } else if (!e.shiftKey && document.activeElement === last) {
-      e.preventDefault();
-      first.focus();
-    } else if (!lightbox.contains(document.activeElement)) {
-      e.preventDefault();
-      first.focus();
-    }
-  }
 });
 
 // ── Random meme ──────────────────────────────────────────────────────
@@ -511,15 +511,6 @@ document.getElementById('randomBtn').addEventListener('click', () => {
   if (all.length === 0) { showToast('No memes match. Clear a filter to try a random pick.'); return; }
   const rand = all[Math.floor(Math.random() * all.length)];
   openLightbox(rand);
-});
-
-// ── Scroll to top ────────────────────────────────────────────────────
-const scrollTopBtn = document.getElementById('scrollTop');
-window.addEventListener('scroll', () => {
-  scrollTopBtn.classList.toggle('visible', window.scrollY > 400);
-}, { passive: true });
-scrollTopBtn.addEventListener('click', () => {
-  window.scrollTo({ top: 0, behavior: scrollBehavior() });
 });
 
 export { loadCategories };
