@@ -10,13 +10,15 @@ make dev         # Run Convex dev watcher (deploys functions + watches for chang
 make serve       # Serve frontend on http://localhost:8777
 make deploy      # Deploy Convex functions to production (no watcher)
 make login       # Authenticate with Convex CLI
+make catalogue   # Rewrite js/data.js from references-api's catalogue
+make test        # npm test
 ```
 
 Both `make dev` (terminal 1) and `make serve` (terminal 2) must run simultaneously for local development. The frontend loads Convex via ESM CDN (`https://esm.sh/convex@1.21.0/browser`). No build step needed on the frontend side.
 
 ## Architecture
 
-**Dual meme source:** The collection merges bundled memes from `js/data.js` (static files in `assets/images/`) with dynamically uploaded memes from Convex storage. `getAllMemes()` in `state.js` concatenates both. Hardcoded memes are never voteable by `_id`, vote keys use `meme.name` (a slug string) for both static and Convex memes.
+**Dual meme source:** The collection merges bundled memes from `js/data.js` (static files in `assets/images/`, listed in references-api's catalogue) with dynamically uploaded memes from Convex storage. `getAllMemes()` in `state.js` concatenates both. Hardcoded memes are never voteable by `_id`, vote keys use `meme.name` (a slug string) for both static and Convex memes.
 
 **Startup sequence:** `app.js` renders immediately from hardcoded data, then independently loads community memes, organization metadata, votes and categories. `client.js` dynamically imports the optional SDK, so even a stalled SDK cannot block the bundled collection. Public reads time out after 12 seconds; partial failures expose a retry and keep the last successful result. Authentication initializes separately.
 
@@ -43,10 +45,26 @@ Both `make dev` (terminal 1) and `make serve` (terminal 2) must run simultaneous
 - `memes.uploadedBy` stores the username always; `displayAnonymous` controls whether the public UI shows the real name or "Anon"
 - `votes.direction` is `+1` or `-1`; legacy rows without `direction` default to `+1` via `?? 1`
 - `votes.memeKey` is the meme's `name` slug, not a Convex `_id`
+- `memes:list` is public and returns whole rows, so `uploadedBy` and `ownerSubject` reach every visitor even for an anonymous upload (`canOrganize` reads `ownerSubject`). references-api's `make uploads` reads this query and copies only `displayName`. Trimming the reply needs a deploy and a `mine` flag in its place.
 
-## Adding Hardcoded Memes
+## Adding bundled memes
 
-Add an entry to the appropriate category array in `js/data.js` and place the image in `assets/images/<category>/`. The `id` must be sequentially unique across all entries. Categories are listed in `export const CATEGORIES` at the bottom of `data.js`.
+`js/data.js` is generated; never edit it. The bundled memes are the `origin: "vault"`
+entries of the community catalogue, `projects/references-api/api/v2/catalogue.json`,
+the one list of every reference and meme (see that repo's CLAUDE.md).
+
+1. Put the image in `assets/images/<category>/`.
+2. Add a catalogue entry: `id` is the meme's name here (votes are keyed by it, so
+   never rename one), `kind: "meme"`, `category`, one primary `media` item whose
+   `url` is `https://memes.neorgon.com/` plus the encoded asset path,
+   `origin: "vault"`, `tags: []`, `added`. Run `make catalogue` in references-api.
+3. Run `make catalogue` here (`scripts/sync-catalogue.mjs`), then `npm test`:
+   `tests/catalogue.test.mjs` fails on an image the catalogue does not list, a
+   listed file that is missing, and a `data.js` that lags the catalogue.
+
+`id` follows catalogue order and `CATEGORIES` is every vault category, sorted.
+`convex/memes.ts` and `convex/categories.ts` import `MEMES` to check bundled names,
+so a new bundled meme can only be organized once `make deploy` has run.
 
 ## Browsing and shared shell
 

@@ -1,5 +1,6 @@
 ---
 config:
+  look: classic
   theme: base
   themeVariables:
     primaryColor: "#0f172a"
@@ -10,7 +11,7 @@ config:
     tertiaryColor: "#1e293b"
     clusterBkg: "#f0f7ff"
     clusterBorder: "#bfdbfe"
-    edgeLabelBackground: "#e8f0ff"
+    edgeLabelBackground: "#1e293b"
     mainBkg: "#0f172a"
     nodeBorder: "#0063e5"
     titleColor: "#1e1b4b"
@@ -19,21 +20,23 @@ config:
 ---
 
 flowchart TB
-    User([User]) --> HTML["index.html\nApp shell"]
+    User["User"] --> HTML["index.html<br>App shell"]
+    Catalogue[("references-api<br>api/v2/catalogue.json")] -->|"make catalogue"| data
 
     subgraph Frontend["Frontend (ES Modules)"]
-        HTML --> app["app.js\nEntry point"]
-        app --> state["state.js\nAuth + filter state"]
-        app --> render["render.js\nMeme grid + cards"]
-        app --> events["events.js\nUpload, vote, auth"]
-        app --> data["data.js\nConvex client layer"]
-        app --> utils["utils.js\nHelpers"]
+        HTML --> app["app.js<br>Entry point"]
+        app --> state["state.js<br>Shared state"]
+        app --> render["render.js<br>Meme grid + cards"]
+        app --> events["events.js<br>Upload, vote, organize"]
+        state --> data["data.js<br>Bundled memes, generated"]
+        state --> client["client.js<br>Convex client"]
+        app --> utils["utils.js<br>Helpers"]
     end
 
     subgraph Convex["Convex Backend"]
-        data -->|"mutations / queries"| auth["auth.ts\nLogin / register"]
-        data -->|"mutations / queries"| memes["memes.ts\nMeme CRUD + storage"]
-        data -->|"mutations / queries"| votes["votes.ts\nUpvote / downvote"]
-        auth & memes & votes --> DB[("Database\nusers / memes / votes")]
+        client -->|"queries / mutations"| memes["memes.ts<br>Uploads + organization"]
+        client -->|"queries / mutations"| votes["votes.ts<br>Upvote / downvote"]
+        client -->|"queries / mutations"| categories["categories.ts<br>Admin categories"]
+        memes & votes & categories --> DB[("Database<br>memes / votes / categories")]
         memes --> FS[("File Storage")]
     end

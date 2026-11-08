@@ -73,7 +73,17 @@ ES modules require an HTTP server: `file://` will not work.
 
 Open **Organize** on a card to edit its category and labels. Choose a suggested category or type a new one. Add labels with Enter or a comma, and remove a label with its × button. Changes are shared across the vault. Category names and labels are normalized and deduplicated; labels are limited to 32 characters each.
 
-Uploaded memes keep their labels in the `memes` table. Bundled images keep overrides in `memeOrganization`, keyed by their stable name; image files and vote keys stay the same. Missing labels on older uploads are treated as an empty list. Older uploads without an owner can be organized by an admin.
+Uploaded memes keep their labels in the `memes` table. Bundled images keep overrides in `memeOrganization`, keyed by their stable name; image files and vote keys stay the same.
+
+## Bundled memes and the catalogue
+
+The bundled memes are listed in the community's one catalogue of references, [references-site](https://github.com/energon-a-secas/references-site)'s `api/v2/catalogue.json`, where they are the `vault` memes. `js/data.js` is generated from it:
+
+1. Put the image in `assets/images/<category>/`.
+2. Add a `vault` entry for it to the catalogue and run `make catalogue` in references-api, which validates it.
+3. Run `make catalogue` here to rewrite `js/data.js`, then `npm test`, which fails on an image the catalogue does not list.
+
+Uploads stay in Convex; references-api's `make uploads` copies them into the catalogue with the credit the uploader chose. Missing labels on older uploads are treated as an empty list. Older uploads without an owner can be organized by an admin.
 
 Deploy the Convex functions and schema **before publishing the updated frontend** with `npx convex deploy`, using an account with access to the configured project. The new `memes:organization` query and `memes:organize` mutation are required for shared organization. The new upload `labels` argument is optional, so older frontend clients remain compatible.
 
@@ -108,8 +118,11 @@ memes-site/
 │   ├── state.js        # Shared mutable state, localStorage
 │   ├── render.js       # DOM rendering, templates
 │   ├── events.js       # Event handlers, user interactions
-│   ├── data.js         # Convex data layer
+│   ├── data.js         # Bundled memes, generated from the catalogue
+│   ├── client.js       # Convex client
 │   └── utils.js        # Shared helpers
+├── scripts/
+│   └── sync-catalogue.mjs  # Writes js/data.js from references-api's catalogue
 └── convex/
     ├── schema.ts        # Database schema (users, memes, votes)
     ├── auth.ts          # Login and registration

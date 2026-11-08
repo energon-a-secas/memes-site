@@ -15,12 +15,14 @@ help:
 	@echo "  make serve      Serve the site locally on PORT (default: $(PORT))"
 	@echo "  make open       Open the site in the browser"
 	@echo "  make login      Authenticate with Convex"
+	@echo "  make catalogue  Rewrite js/data.js from references-api's catalogue"
+	@echo "  make test       Run the unit tests"
 	@echo ""
 
 # ── Setup ──────────────────────────────────────────────────────────────────────
 .PHONY: setup
 setup: install deploy
-	@echo "Setup complete — run 'make serve' to view the site"
+	@echo "Setup complete. Run 'make serve' to view the site"
 
 # ── Dependencies ───────────────────────────────────────────────────────────────
 .PHONY: install
@@ -49,3 +51,12 @@ serve:
 .PHONY: open
 open:
 	open http://localhost:$(PORT)
+
+# ── Catalogue ──────────────────────────────────────────────────────────────────
+# Bundled memes are listed in references-api's catalogue (api/v2/catalogue.json).
+.PHONY: catalogue test
+catalogue:
+	@node scripts/sync-catalogue.mjs
+
+test:
+	@npm test
