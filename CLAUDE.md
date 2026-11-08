@@ -48,7 +48,6 @@ Both `make dev` (terminal 1) and `make serve` (terminal 2) must run simultaneous
 - `votes.memeKey` is the meme's `name` slug, not a Convex `_id`
 - `memes:list` answers every visitor, so `publicMeme()` names each field it sends (`_id`, `_creationTime`, `name`, `category`, `labels`, `ext`, `url`, `displayName`, `mine`) instead of spreading the row. `uploadedBy`, `ownerSubject` and `storageId` stay on the server: any of them would link anonymous uploads to their uploader and to each other. `tests/backend.test.mjs` fails if one reaches the reply.
 - `mine` is true only on the caller's own uploads, worked out from their token. `canOrganize()` reads it through `state.myUploads`, and `initMemesAuth()` fetches the list again whenever the account changes (the Auth Kit sets the token before it notifies), because a list fetched signed out marks nothing.
-- Pending since 2026-11-08: the trimmed reply is committed but not deployed. Run `make deploy`, then publish the frontend right away; until both are live, uploaders (not admins) see no Organize button on their own memes. Delete this line once both are live.
 
 ## Adding bundled memes
 
