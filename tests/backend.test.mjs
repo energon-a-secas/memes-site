@@ -10,7 +10,7 @@ import { pathToFileURL } from 'node:url';
 const temp = await mkdtemp(join(tmpdir(), 'meme-backend-'));
 const bundle = join(temp, 'memes.mjs');
 await build({entryPoints:['convex/memes.ts'],bundle:true,platform:'node',format:'esm',outfile:bundle});
-const { organize, saveMeme } = await import(pathToFileURL(bundle));
+const { list, organize, saveMeme } = await import(pathToFileURL(bundle));
 const categoryBundle = join(temp, 'categories.mjs');
 await build({entryPoints:['convex/categories.ts'],bundle:true,platform:'node',format:'esm',outfile:categoryBundle});
 const { create, rename, remove } = await import(pathToFileURL(categoryBundle));
@@ -84,6 +84,57 @@ test('upload saves labels and keeps anonymous attribution and owner identity', a
   assert.equal(ctx.writes[0].ownerSubject, 'owner');
   assert.equal(ctx.writes[0].displayAnonymous, true);
   assert.deepEqual(ctx.writes[0].labels, ['work']);
+});
+
+// ── The public list ──────────────────────────────────────────────────
+// memes:list answers every visitor. A stored row also holds the uploader's
+// name, account id and storage id; each one would link anonymous uploads to
+// their uploader and to each other.
+const UPLOADS = [
+  {_id:'m1',_creationTime:3,name:'team-reaction',category:'general',labels:['work'],ext:'png',storageId:'kg_storage_secret',uploadedBy:'Real Uploader',displayAnonymous:true,ownerSubject:'user_owner_secret'},
+  {_id:'m2',_creationTime:2,name:'game-night',category:'games',ext:'jpg',storageId:'kg_other_storage',uploadedBy:'Tomás',displayAnonymous:false,ownerSubject:'user_other_secret'},
+  {_id:'m3',_creationTime:1,name:'legacy',category:'general',ext:'gif',storageId:'kg_legacy_storage',uploadedBy:'Member',displayAnonymous:true},
+  {_id:'m4',_creationTime:0,name:'file-gone',category:'general',ext:'png',storageId:'kg_gone',uploadedBy:'Member',displayAnonymous:true,ownerSubject:'user_owner_secret'},
+];
+// Storage URLs are opaque, like Convex's, so they carry no storage id.
+const URLS = {kg_storage_secret:'https://example.convex.cloud/api/storage/0001', kg_other_storage:'https://example.convex.cloud/api/storage/0002', kg_legacy_storage:'https://example.convex.cloud/api/storage/0003'};
+const PUBLIC_FIELDS = ['_creationTime','_id','category','displayName','ext','labels','mine','name','url'];
+
+function listContext(subject) {
+  return {
+    auth: {getUserIdentity: async () => subject ? {subject, name:'Tester'} : null},
+    db: {query: table => {
+      assert.equal(table, 'memes');
+      return {order: () => ({collect: async () => structuredClone(UPLOADS)})};
+    }},
+    storage: {getUrl: async id => URLS[id] ?? null},
+  };
+}
+
+test('the public list sends only what the page shows, never who uploaded a meme', async () => {
+  for (const subject of [null, 'user_owner_secret', 'user_other_secret']) {
+    const rows = await list._handler(listContext(subject), {});
+    assert.deepEqual(rows.map(row => row._id), ['m1','m2','m3'], 'a meme whose file is gone is left out');
+    for (const row of rows) assert.deepEqual(Object.keys(row).sort(), PUBLIC_FIELDS);
+    const text = JSON.stringify(rows);
+    for (const secret of ['Real Uploader','user_owner_secret','user_other_secret','kg_storage_secret','kg_other_storage','kg_legacy_storage']) {
+      assert.ok(!text.includes(secret), `${secret} reached a visitor signed in as ${subject}`);
+    }
+  }
+});
+
+test('mine marks only the caller\'s own uploads; an upload with no owner is nobody\'s', async () => {
+  const mine = async subject => Object.fromEntries((await list._handler(listContext(subject), {})).map(row => [row._id, row.mine]));
+  assert.deepEqual(await mine(null), {m1:false,m2:false,m3:false});
+  assert.deepEqual(await mine('user_owner_secret'), {m1:true,m2:false,m3:false});
+  assert.deepEqual(await mine('user_other_secret'), {m1:false,m2:true,m3:false});
+});
+
+test('the list credits uploaders as they chose and always sends labels as a list', async () => {
+  const rows = await list._handler(listContext(null), {});
+  assert.deepEqual(rows.map(row => row.displayName), ['Anon','Tomás','Anon']);
+  assert.deepEqual(rows.map(row => row.labels), [['work'],[],[]]);
+  assert.equal(rows[0].url, URLS.kg_storage_secret);
 });
 
 // ── Category administration ──────────────────────────────────────────

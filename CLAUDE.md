@@ -36,6 +36,7 @@ Both `make dev` (terminal 1) and `make serve` (terminal 2) must run simultaneous
 
 `state` object (in `state.js`):
 - `convexMemes`: raw results from `memes:list`, includes resolved storage URLs
+- `myUploads`: `_id`s that `memes:list` marked `mine`; cleared when the account changes
 - `voteCounts`: `{ [memeKey: string]: number }` net score (upvotes − downvotes)
 - `myVotes` / `myDownvotes`: Sets of meme name slugs voted by this visitor
 - `activeCategory`, `sortBy`: filter/sort state driving `filterGrid()`
@@ -45,7 +46,9 @@ Both `make dev` (terminal 1) and `make serve` (terminal 2) must run simultaneous
 - `memes.uploadedBy` stores the username always; `displayAnonymous` controls whether the public UI shows the real name or "Anon"
 - `votes.direction` is `+1` or `-1`; legacy rows without `direction` default to `+1` via `?? 1`
 - `votes.memeKey` is the meme's `name` slug, not a Convex `_id`
-- `memes:list` is public and returns whole rows, so `uploadedBy` and `ownerSubject` reach every visitor even for an anonymous upload (`canOrganize` reads `ownerSubject`). references-api's `make uploads` reads this query and copies only `displayName`. Trimming the reply needs a deploy and a `mine` flag in its place.
+- `memes:list` answers every visitor, so `publicMeme()` names each field it sends (`_id`, `_creationTime`, `name`, `category`, `labels`, `ext`, `url`, `displayName`, `mine`) instead of spreading the row. `uploadedBy`, `ownerSubject` and `storageId` stay on the server: any of them would link anonymous uploads to their uploader and to each other. `tests/backend.test.mjs` fails if one reaches the reply.
+- `mine` is true only on the caller's own uploads, worked out from their token. `canOrganize()` reads it through `state.myUploads`, and `initMemesAuth()` fetches the list again whenever the account changes (the Auth Kit sets the token before it notifies), because a list fetched signed out marks nothing.
+- Pending since 2026-11-08: the trimmed reply is committed but not deployed. Run `make deploy`, then publish the frontend right away; until both are live, uploaders (not admins) see no Organize button on their own memes. Delete this line once both are live.
 
 ## Adding bundled memes
 

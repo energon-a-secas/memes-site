@@ -1,23 +1,40 @@
 import { query, mutation } from "./_generated/server";
+import type { Doc } from "./_generated/dataModel";
 import { v, ConvexError } from "convex/values";
 import { MEMES } from "../js/data.js";
 import { validateOrganization } from "../js/organization.js";
 import { isAdminIdentity, surfaced } from "./admin";
 
+/**
+ * An upload as every visitor may see it. A row also holds the uploader's name
+ * (`uploadedBy`), their account id (`ownerSubject`) and the storage id, and any
+ * of them would tie an anonymous upload to its uploader and to their other
+ * uploads, so this names each field it sends instead of spreading the row.
+ * `mine` tells a signed-in caller which uploads they may organize.
+ */
+function publicMeme(meme: Doc<"memes">, url: string, subject: string | null) {
+  return {
+    _id: meme._id,
+    _creationTime: meme._creationTime,
+    name: meme.name,
+    category: meme.category,
+    labels: meme.labels ?? [],
+    ext: meme.ext,
+    url,
+    displayName: meme.displayAnonymous ? "Anon" : meme.uploadedBy,
+    mine: !!subject && meme.ownerSubject === subject,
+  };
+}
+
 export const list = query({
   args: {},
   handler: async (ctx) => {
+    const subject = (await ctx.auth.getUserIdentity())?.subject ?? null;
     const memes = await ctx.db.query("memes").order("desc").collect();
     const results = [];
     for (const meme of memes) {
       const url = await ctx.storage.getUrl(meme.storageId);
-      if (url) {
-        results.push({
-          ...meme,
-          url,
-          displayName: meme.displayAnonymous ? "Anon" : meme.uploadedBy,
-        });
-      }
+      if (url) results.push(publicMeme(meme, url, subject));
     }
     return results;
   },

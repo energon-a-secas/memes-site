@@ -36,6 +36,7 @@ export const state = {
   authSubject: null,
   sortBy: 'recent',           // 'recent' | 'default' | 'votes'
   convexMemes: [],
+  myUploads: new Set(),        // _ids memes:list marked `mine` for the signed-in account
   selectedFile: null,
   voteCounts: {},              // { memeKey: number }  (upvotes - downvotes)
   myVotes: new Set(),          // set of memeKey strings I upvoted
@@ -63,7 +64,6 @@ export function getAllMemes() {
     name: m.name,
     category: m.category,
     labels: m.labels || [],
-    ownerSubject: m.ownerSubject,
     path: m.url,
     ext: m.ext,
     id: MEMES.length + i + 1,
@@ -74,6 +74,7 @@ export function getAllMemes() {
   return [...MEMES.map(meme => ({ ...meme, labels: [], ...state.organization[meme.name] })), ...mapped];
 }
 
+/** Admins organize any meme; everyone else only the uploads the server marked as theirs. */
 export function canOrganize(meme) {
-  return !!state.authLabel && (state.isConvexAdmin || !!(meme._id && meme.ownerSubject && meme.ownerSubject === state.authSubject));
+  return !!state.authLabel && (state.isConvexAdmin || (!!meme._id && state.myUploads.has(meme._id)));
 }

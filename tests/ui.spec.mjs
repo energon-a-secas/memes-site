@@ -2,22 +2,27 @@ import { test, expect } from '@playwright/test';
 import { resolve } from 'node:path';
 
 const IMAGE = 'assets/images/anime/avatar-no-war.png';
-async function fixture(page, {admin = false, signedIn = true} = {}) {
-  await page.addInitScript(({admin, signedIn, image}) => {
+async function fixture(page, {admin = false, signedIn = true, authDelay = 0, signInSucceeds = false} = {}) {
+  await page.addInitScript(({admin, signedIn, authDelay, signInSucceeds, image}) => {
     window.fixture = {
-      admin, signedIn, calls:[], fail:false,
+      admin, signedIn, authDelay, signInSucceeds, calls:[], fail:false,
+      // `owner` stands in for the stored ownerSubject; memes:list never sends it.
       memes:JSON.parse(localStorage.getItem('test-memes') || 'null') || [
-        {_id:'upload-1',name:'team-reaction',category:'general',labels:['work','reaction'],url:image,ext:'png',ownerSubject:'owner',displayName:'Anon',_creationTime:200},
-        {_id:'upload-2',name:'game-night',category:'games',labels:['work'],url:'assets/images/games/la-bestia.jpg',ext:'jpg',ownerSubject:'other',displayName:'Member',_creationTime:100},
+        {_id:'upload-1',name:'team-reaction',category:'general',labels:['work','reaction'],url:image,ext:'png',owner:'owner',displayName:'Anon',_creationTime:200},
+        {_id:'upload-2',name:'game-night',category:'games',labels:['work'],url:'assets/images/games/la-bestia.jpg',ext:'jpg',owner:'other',displayName:'Member',_creationTime:100},
       ],
       organization:JSON.parse(localStorage.getItem('test-organization') || 'null') || [{memeKey:'aun-me-queda-el-panda',category:'anime',labels:['reaction']}],
     };
-  }, {admin,signedIn,image:IMAGE});
+  }, {admin,signedIn,authDelay,signInSucceeds,image:IMAGE});
   await page.route('https://esm.sh/convex@1.21.0/browser', route => route.fulfill({contentType:'text/javascript',body:`
     export class ConvexHttpClient {
+      setAuth(token) { this.token = token; }
+      clearAuth() { this.token = null; }
       async query(name) {
         const f=window.fixture;
-        if(name==='memes:list') return f.memes;
+        // Like the server: the fields the page shows, and whether the caller
+        // (the fixture account is "owner") uploaded each one.
+        if(name==='memes:list') return f.memes.map(({_id,_creationTime,name,category,labels,ext,url,displayName,owner})=>({_id,_creationTime,name,category,labels:labels||[],ext,url,displayName,mine:!!this.token&&owner==='owner'}));
         if(name==='memes:organization') return f.organization;
         if(name==='auth:isAdmin') return f.admin;
         if(name==='votes:getVotes') return {counts:[],upvoted:[],downvoted:[]};
@@ -29,7 +34,7 @@ async function fixture(page, {admin = false, signedIn = true} = {}) {
         if(f.fail) throw new Error('Simulated offline save');
         if(name==='memes:getUploadUrl') return location.origin+'/fixture-upload';
         if(name==='memes:saveMeme') {
-          f.memes.unshift({...args,_id:'new-upload',ownerSubject:'owner',url:'${IMAGE}',_creationTime:300});
+          f.memes.unshift({...args,_id:'new-upload',owner:'owner',url:'${IMAGE}',displayName:args.displayAnonymous?'Anon':'Tester',_creationTime:300});
         }
         if(name==='memes:organize') {
           const values={category:args.category,labels:args.labels};
@@ -41,8 +46,27 @@ async function fixture(page, {admin = false, signedIn = true} = {}) {
         }
       }
     }` }));
+  // Like the kit, the token reaches Convex before any listener hears "signed in".
   await page.route('**/js/neorgon-auth.js', route => route.fulfill({contentType:'text/javascript',body:`
-    export const NeoAuth={onChange(fn){this.listener=fn},async start(){this.listener({signedIn:window.fixture.signedIn,label:window.fixture.signedIn?'Tester':null,userId:'owner'})},async requireSignIn(){window.fixture.signInRequested=true;return false}};
+    export const NeoAuth={
+      onChange(fn){this.listener=fn},
+      async start({convex}){
+        this.convex=convex;
+        const f=window.fixture;
+        if(f.authDelay) await new Promise(r=>setTimeout(r,f.authDelay));
+        if(f.signedIn) convex.setAuth('fixture-token');
+        this.listener({signedIn:f.signedIn,label:f.signedIn?'Tester':null,userId:f.signedIn?'owner':null});
+      },
+      async requireSignIn(){
+        const f=window.fixture;
+        f.signInRequested=true;
+        if(!f.signInSucceeds) return false;
+        f.signedIn=true;
+        this.convex.setAuth('fixture-token');
+        this.listener({signedIn:true,label:'Tester',userId:'owner'});
+        return true;
+      },
+    };
   `}));
   await page.route('**/fixture-upload', route => route.fulfill({json:{storageId:'new-storage'}}));
   // Prevent any fixture from reaching production Convex or authentication services.
@@ -178,6 +202,27 @@ test('anonymous visitors can browse and see how to organize', async ({page}) => 
   await page.locator('#organizeToggle').click();
   expect(await page.evaluate(()=>window.fixture.signInRequested)).toBe(true);
   expect(await page.evaluate(()=>window.fixture.calls.length)).toBe(0);
+});
+
+// The list says which uploads are the caller's only once it is fetched with
+// their token, so both paths below depend on fetching it again at sign-in.
+test('a viewer opened before the account arrives offers Organize once it does', async ({page}) => {
+  await fixture(page,{authDelay:1500});
+  await page.getByRole('button',{name:'Organize Team Reaction',exact:true}).click();
+  await expect(page.locator('#organizeHint')).toContainText('Sign in');
+  await expect(page.locator('#organizeHint')).toContainText('shared with everyone');
+  await expect(page.locator('#organizeToggle')).toBeEnabled();
+  await page.getByRole('button',{name:'Close',exact:true}).click();
+  await page.getByRole('button',{name:'Organize Game Night',exact:true}).click();
+  await expect(page.locator('#organizeToggle')).toBeDisabled();
+});
+
+test('signing in from the viewer opens the organize form on the owner\'s upload', async ({page}) => {
+  await fixture(page,{signedIn:false,signInSucceeds:true});
+  await page.getByRole('button',{name:'Organize Team Reaction',exact:true}).click();
+  await page.locator('#organizeToggle').click();
+  await expect(page.locator('#organizeForm')).toBeVisible();
+  await expect(page.locator('#lightboxName')).toHaveText('Team Reaction');
 });
 
 test('Escape closes the category picker while keeping the viewer and draft open', async ({page}) => {

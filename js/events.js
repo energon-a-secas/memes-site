@@ -74,10 +74,13 @@ export async function loadConvexMemes({ render = true } = {}) {
   await loadResource('Community memes', api.memes.list, {}, results => {
     if (!Array.isArray(results)) throw new Error('Invalid collection');
     state.convexMemes = results;
+    // The reply carries no uploader ids; the server marks the caller's own uploads.
+    state.myUploads = new Set(results.filter(meme => meme.mine === true).map(meme => meme._id));
     if (render) { rebuildChips(); filterGrid(); }
     const total = MEMES.length + state.convexMemes.length;
     document.getElementById('subtitle').textContent = `${total} internal jokes`;
-
+    // A viewer opened before the signed-in list arrived offers Organize now.
+    if (currentMeme?._id && organizeForm.hidden && !savingOrganization) renderLightboxOrganization();
   });
 }
 
@@ -198,15 +201,27 @@ function renderAuthState() {
   categoryAdminButton.hidden = !state.isConvexAdmin;
 }
 
+// Settles once the list and the admin flag reflect the current account, so a
+// flow that signs someone in can wait for what decides the Organize button.
+let sessionReady = Promise.resolve();
+
 /** Called once from app.js. */
 export async function initMemesAuth() {
   NeoAuth.onChange(({ signedIn, label, userId }) => {
+    const previous = state.authSubject;
     setAuthSession(signedIn ? label : null, false, userId);
+    // memes:list marks only the caller's own uploads, so another account needs
+    // a fresh list. The kit sets the new token before it calls this.
+    const accountChanged = state.authSubject !== previous;
+    if (accountChanged) state.myUploads = new Set();
     if (currentMeme) renderLightboxOrganization();
     renderAuthState();
     filterGrid();
 
-    if (signedIn) void refreshAdminFlag();
+    sessionReady = Promise.all([
+      accountChanged ? loadConvexMemes() : null,
+      signedIn ? refreshAdminFlag() : null,
+    ]);
   });
   await NeoAuth.start({ convex });
 }
@@ -393,7 +408,9 @@ organizeToggle.addEventListener('click', async event => {
     const meme = currentMeme;
     closeLightbox();
     const signedIn = await NeoAuth.requireSignIn({ reason: 'Sign in to organize your uploads.' });
-    if (signedIn && meme) openLightbox(meme, { organize: true });
+    if (!signedIn || !meme) return;
+    await sessionReady;
+    openLightbox(meme, { organize: true });
     return;
   }
   if (!organizeForm.hidden) { renderLightboxOrganization(); return; }
