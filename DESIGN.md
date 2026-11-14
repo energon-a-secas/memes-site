@@ -15,11 +15,11 @@ The Neorgon header, themes, footer, and Auth Kit are vendored suite components. 
 
 The application tokens live in `css/style.css`. Neutrals use OKLCH with a slight cool tint: background at 15% lightness, surfaces at 19% and 23%, primary text at 96%, secondary text at 81%, and muted text at 68%. Blue action backgrounds use 49% lightness; readable action text uses a lighter blue. Rose and red indicate positive and negative vote states, accompanied by numeric scores and pressed states.
 
-Use the suite's sans serif stack for body and headings. Keep headings at 2rem on desktop and 1.5rem on small screens, section titles at 1.125rem, body at .875rem, and secondary controls at .75rem. Use 6px control corners and 10px card corners.
+Use the suite's sans serif stack for body and headings. The page has no display headline: the header carries the name and its line. Keep section titles at 1.125rem, body at .875rem, and secondary controls at .75rem. Use 6px control corners and 10px card corners.
 
 ## Layout
 
-- The introduction pairs a short collection heading with a compact daily pick.
+- The page opens on a compact daily pick, then the library. No collection headline or slogan sits above them.
 - Desktop uses a 204px category and label sidebar beside the search, results and image grid.
 - Below 760px, the sidebar becomes an expandable filter section and the gallery uses two columns.
 - Category buttons show readable names and counts. Labels are independent, combinable filters. Active filters appear above the results with individual remove actions and Clear all.

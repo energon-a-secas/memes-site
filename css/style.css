@@ -41,19 +41,17 @@ button svg { width: 18px; height: 18px; flex: 0 0 auto; }
 .nav-link--upload { background: var(--action-bg); color: var(--text-primary); }
 .nav-link--upload:hover { background: var(--accent-dim); }
 
-/* The collection introduction and a compact daily discovery. */
-.vault-intro { display: flex; align-items: center; justify-content: space-between; gap: 40px; margin-bottom: 36px; padding: 6px 0 30px; border-bottom: 1px solid var(--border-subtle); }
-.eyebrow { font-size: .6875rem; font-weight: 650; letter-spacing: .13em; color: var(--text-muted); margin-bottom: 10px; }
-.vault-intro h2 { font-size: 2rem; letter-spacing: -.045em; font-weight: 650; line-height: 1.2; margin-bottom: 10px; }
-.vault-intro > div > p:last-child { color: var(--text-muted); font-size: .875rem; }
-.motd-banner { display: flex; align-items: center; gap: 14px; width: 305px; flex-shrink: 0; }
+/* A compact daily discovery above the library. */
+.vault-pick { margin-bottom: 32px; padding: 0 0 24px; border-bottom: 1px solid var(--border-subtle); }
+.motd-banner { display: flex; align-items: center; gap: 14px; max-width: 420px; }
 .motd-img { width: 88px; height: 88px; border-radius: 8px; object-fit: cover; cursor: pointer; }
 .motd-info { min-width: 0; display: flex; flex-direction: column; gap: 5px; }
-.motd-label { font-size: .6875rem; color: var(--text-muted); font-weight: 600; }
+.motd-label { font-size: .75rem; color: var(--text-muted); font-weight: 600; }
 .motd-name { font-size: .8125rem; font-weight: 550; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .motd-actions { display: flex; gap: 14px; }
 .motd-btn { padding: 4px 0; border: 0; color: var(--accent); background: transparent; font-size: .75rem; }
 .motd-btn:hover { color: var(--accent-bright); text-decoration: underline; }
+@media (pointer: coarse) { .motd-btn { min-height: 44px; min-width: 44px; } }
 
 /* Desktop navigation becomes an expandable filter panel on small screens. */
 .library-layout { display: grid; grid-template-columns: 204px minmax(0, 1fr); gap: 36px; align-items: start; }
@@ -224,13 +222,9 @@ input::placeholder { color: var(--text-muted); }
 }
 @media (max-width: 760px) {
   .container { padding: 24px 16px 40px; }
-  .vault-intro { margin-bottom: 20px; padding-bottom: 22px; gap: 20px; }
-  .vault-intro h2 { font-size: 1.5rem; }
-  .motd-banner { width: 90px; }
-  .motd-img { display: none; }
-  .motd-name, #motdCopy { display: none; }
-  .motd-actions { gap: 0; }
-  .motd-info { gap: 5px; }
+  .vault-pick { margin-bottom: 20px; padding-bottom: 18px; }
+  .motd-img { width: 64px; height: 64px; }
+  .motd-info { gap: 2px; }
   .library-layout { display: block; }
   .library-sidebar { position: static; margin-bottom: 18px; }
   .sidebar-heading { display: flex; align-items: center; justify-content: space-between; }
@@ -264,11 +258,6 @@ input::placeholder { color: var(--text-muted); }
   .upload-preview > img { width: 90px; }
 }
 @media (max-width: 420px) {
-  .vault-intro { align-items: start; }
-  .vault-intro h2 { max-width: 13ch; }
-  .vault-intro > div > p:last-child { font-size: .75rem; }
-  .eyebrow { font-size: .625rem; }
-  .motd-banner { width: 84px; padding-top: 26px; }
   .search-shortcut { display: none; }
   #searchInput { padding-right: 12px; font-size: .8125rem; }
   .meme-grid { gap: 10px; }
